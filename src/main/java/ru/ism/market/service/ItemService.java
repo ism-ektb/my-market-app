@@ -1,5 +1,7 @@
 package ru.ism.market.service;
 
+import org.springframework.web.multipart.MultipartFile;
+import ru.ism.market.module.dto.in.ItemInDto;
 import ru.ism.market.module.dto.out.ItemOutDto;
 import ru.ism.market.module.dto.out.ItemsOutDto;
 import ru.ism.market.module.enums.Action;
@@ -29,4 +31,11 @@ public interface ItemService {
      * @return
      */
     ItemsOutDto searchItems(String keyword, int pageNumber, int pageSize);
+
+    /**
+     * Сохранение информации о позиции
+     * @param itemInDto
+     * @param file
+     */
+    void createItem(ItemInDto itemInDto, MultipartFile file);
 }

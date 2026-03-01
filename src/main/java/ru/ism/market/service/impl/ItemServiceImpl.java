@@ -1,6 +1,8 @@
 package ru.ism.market.service.impl;
 
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import ru.ism.market.module.dto.in.ItemInDto;
 import ru.ism.market.module.dto.out.ItemOutDto;
 import ru.ism.market.module.dto.out.ItemsOutDto;
 import ru.ism.market.module.dto.out.Paging;
@@ -43,5 +45,16 @@ public class ItemServiceImpl implements ItemService {
                 new ItemOutDto(2, "name", "description", "images/1.jpg", 10L, 1),
                 new ItemOutDto(-1, "name", "description", "images/1.jpg", 10L, 1))),
                 new Paging(1, 1, true, true));
+    }
+
+    /**
+     * Сохранение информации о позиции
+     *
+     * @param itemInDto
+     * @param file
+     */
+    @Override
+    public void createItem(ItemInDto itemInDto, MultipartFile file) {
+
     }
 }

@@ -18,7 +18,7 @@ public class ItemController {
     public final ItemService itemService;
 
     @GetMapping("/items/{id}")
-    public String item(@PathVariable long id, Model model) {
+    public String getItem(@PathVariable long id, Model model) {
         model.addAttribute("item", itemService.getItem(id));
         return "item";
     }
@@ -32,7 +32,7 @@ public class ItemController {
     }
 
     @GetMapping(value = {"", "/", "/items"})
-    public String items(@RequestParam(value = "search", required = false, defaultValue = "") String search,
+    public String getItems(@RequestParam(value = "search", required = false, defaultValue = "") String search,
                         @RequestParam(value = "sort", required = false, defaultValue = "NO") Sort sort,
                         @RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
                         @RequestParam(value = "pageSize", required = false, defaultValue = "5") int pageSize,
