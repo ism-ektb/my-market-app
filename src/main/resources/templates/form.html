@@ -6,7 +6,8 @@
 </head>
 <body>
 
-<p th:if="${ok}">Данные сохранены</p>
+<p th:if="${ok.equals('ok')}">Данные сохранены</p>
+<p th:if="${ok.equals('error')}">Ошибка сохранения. Введите корректные данные</p>
 Введите данные нового товара.
 <form action="#" th:action="@{/form}" th:object="${item}" enctype="multipart/form-data" method="post">
     Название: <input type="text" th:field="*{title}"><br>

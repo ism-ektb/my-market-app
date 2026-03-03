@@ -1,6 +1,9 @@
 package ru.ism.market.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -33,10 +36,10 @@ public class ItemController {
 
     @GetMapping(value = {"", "/", "/items"})
     public String getItems(@RequestParam(value = "search", required = false, defaultValue = "") String search,
-                        @RequestParam(value = "sort", required = false, defaultValue = "NO") Sort sort,
-                        @RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
-                        @RequestParam(value = "pageSize", required = false, defaultValue = "5") int pageSize,
-                        Model model) {
+                           @RequestParam(value = "sort", required = false, defaultValue = "NO") Sort sort,
+                           @RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
+                           @RequestParam(value = "pageSize", required = false, defaultValue = "5") int pageSize,
+                           Model model) {
         var items = itemService.searchItems(search, pageNumber, pageSize);
         model.addAttribute("items", items.items());
         model.addAttribute("search", search);
@@ -54,5 +57,16 @@ public class ItemController {
                                  @RequestParam("action") Action action) {
         itemService.addItemInCart(itemId, action);
         return String.format("redirect:/items?search=%s&sort=%s&pageNumber=%d&pageSize=%d", search, sort, pageNumber, pageSize);
+    }
+
+    @GetMapping(value = "/image/{id}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public ResponseEntity<byte[]> getImage(@PathVariable("id") long id) {
+
+        byte[] bytes = itemService.getImage(id);
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .header(HttpHeaders.CACHE_CONTROL, "no-store")
+                .body(bytes);
     }
 }

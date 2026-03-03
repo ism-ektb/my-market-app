@@ -6,10 +6,13 @@ import ru.ism.market.module.dto.out.ItemOutDto;
 import ru.ism.market.module.dto.out.ItemsOutDto;
 import ru.ism.market.module.enums.Action;
 
+import java.io.IOException;
+
 public interface ItemService {
 
     /**
      * Получить товар по Id
+     *
      * @param id
      * @return
      */
@@ -17,6 +20,7 @@ public interface ItemService {
 
     /**
      * Изменить количество товара в корзине на единицу
+     *
      * @param itemId
      * @param action
      * @return
@@ -25,6 +29,7 @@ public interface ItemService {
 
     /**
      * Поиск товаров по ключевому слову
+     *
      * @param keyword
      * @param pageNumber
      * @param pageSize
@@ -34,8 +39,11 @@ public interface ItemService {
 
     /**
      * Сохранение информации о позиции
+     *
      * @param itemInDto
      * @param file
      */
-    void createItem(ItemInDto itemInDto, MultipartFile file);
+    void createItem(ItemInDto itemInDto, MultipartFile file) throws IOException;
+
+    byte[] getImage(long id);
 }
