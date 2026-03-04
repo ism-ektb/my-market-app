@@ -23,6 +23,7 @@ import ru.ism.market.module.enums.Sorting;
 import ru.ism.market.repository.CartRepository;
 import ru.ism.market.repository.ImageRepository;
 import ru.ism.market.repository.ItemRepository;
+import ru.ism.market.repository.ItemWithQuantityRepo;
 import ru.ism.market.service.ItemService;
 
 import java.io.IOException;
@@ -41,9 +42,11 @@ public class ItemServiceImpl implements ItemService {
     private final CartRepository cartRepository;
     private final ItemMapper itemMapper;
     private final ImageRepository imageRepository;
+    private final ItemWithQuantityRepo itemWithQuantityRepo;
     private final Resource resource = new ClassPathResource("no_foto.jpg");
 
     @Override
+    @Transactional(readOnly = true)
     public ItemOutDto getItem(long id) {
         Item item = itemRepository.findById(id).orElseThrow(() -> new RuntimeException("Item not found"));
         Cart cart = cartRepository.findById(1L).orElseThrow(() -> new RuntimeException("Cart not found"));
@@ -64,7 +67,33 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public ItemOutDto addItemInCart(long itemId, Action action) {
-        return new ItemOutDto(1, "name", "описание", "images/1.jpg", 10, 1);
+        Item item = itemRepository.findById(itemId).orElseThrow(() -> new RuntimeException("Item not found"));
+        Cart cart = cartRepository.findById(1L).orElseThrow(() -> new RuntimeException("Cart not found"));
+        ItemWithQuantity itemWithQuantity = cart.getItemsWithQuantity().stream()
+                .filter(iwq -> iwq.getItem().getItem_id() == itemId)
+                .findFirst()
+                .orElse(null);
+        if (itemWithQuantity == null) {
+            if (action == Action.MINUS) {
+                return itemMapper.toItemOutDto(item,0);
+            }
+            ItemWithQuantity newItemWithQuantity = itemWithQuantityRepo.save(ItemWithQuantity.builder()
+                    .item(item).quantity(1).build());
+            cart.getItemsWithQuantity().add(newItemWithQuantity);
+            return itemMapper.toItemOutDto(item, 1);
+        }
+        int quantity = itemWithQuantity.getQuantity();
+        if (action == Action.PLUS) {
+            itemWithQuantity.setQuantity(quantity + 1);
+            return itemMapper.toItemOutDto(item, quantity + 1);
+        }
+        if (quantity > 1) {
+            itemWithQuantity.setQuantity(quantity - 1);
+            return itemMapper.toItemOutDto(item, quantity - 1);
+        }
+        cart.getItemsWithQuantity().remove(itemWithQuantity);
+        itemWithQuantityRepo.delete(itemWithQuantity);
+        return itemMapper.toItemOutDto(item, 0);
     }
 
     /**
@@ -78,6 +107,7 @@ public class ItemServiceImpl implements ItemService {
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public ItemsOutDto searchItems(String keyword, int pageNumber, int pageSize, Sorting sorting) {
         Page<Item> list;
         Sort sort = switch (sorting) {
@@ -132,10 +162,12 @@ public class ItemServiceImpl implements ItemService {
 
     /**
      * Получение изображения из БД в виде списка байт
+     *
      * @param id
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public byte[] getImage(long id) {
         try {
             return imageRepository.findById(id)

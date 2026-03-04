@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
 @Entity
 @NoArgsConstructor
+@SuperBuilder
 @Table(name = "item_with_quantity")
 public class ItemWithQuantity {
     @Id

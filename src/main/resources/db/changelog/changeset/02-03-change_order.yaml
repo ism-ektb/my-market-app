@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - changeSet:
+      id: 03
+      author: ilya
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: total_sum
+                  type: bigint

@@ -1,15 +1,19 @@
 package ru.ism.market.module;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Setter
+@Getter
 @Entity
 @NoArgsConstructor
+@SuperBuilder
 @Table(name = "orders")
 public class Order {
     @Id
@@ -18,4 +22,6 @@ public class Order {
     private long id;
     @OneToMany
     private List<ItemWithQuantity> itemsWithQuantity = new ArrayList<>();
+    @Column(name = "total_sum")
+    private long totalSum;
 }
