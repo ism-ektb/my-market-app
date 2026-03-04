@@ -1,5 +1,5 @@
 package ru.ism.market.module.enums;
 
-public enum Sort {
+public enum Sorting {
     NO, ALPHA, PRICE;
 }

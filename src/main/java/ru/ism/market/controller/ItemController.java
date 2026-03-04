@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import ru.ism.market.module.enums.Action;
-import ru.ism.market.module.enums.Sort;
+import ru.ism.market.module.enums.Sorting;
 import ru.ism.market.service.ItemService;
 
 @Controller
@@ -36,14 +36,14 @@ public class ItemController {
 
     @GetMapping(value = {"", "/", "/items"})
     public String getItems(@RequestParam(value = "search", required = false, defaultValue = "") String search,
-                           @RequestParam(value = "sort", required = false, defaultValue = "NO") Sort sort,
-                           @RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
+                           @RequestParam(value = "sort", required = false, defaultValue = "NO") Sorting sort,
+                           @RequestParam(value = "pageNumber", required = false, defaultValue = "0") int pageNumber,
                            @RequestParam(value = "pageSize", required = false, defaultValue = "5") int pageSize,
                            Model model) {
-        var items = itemService.searchItems(search, pageNumber, pageSize);
+        var items = itemService.searchItems(search, pageNumber, pageSize, sort);
         model.addAttribute("items", items.items());
         model.addAttribute("search", search);
-        model.addAttribute("sort", sort);
+        model.addAttribute("sort", sort.toString());
         model.addAttribute("paging", items.paging());
         return "items";
     }
@@ -51,7 +51,7 @@ public class ItemController {
     @PostMapping(value = {"", "/items"})
     public String addItemsInCart(@RequestParam("id") long itemId,
                                  @RequestParam(value = "search", required = false, defaultValue = "") String search,
-                                 @RequestParam(value = "sort", required = false, defaultValue = "NO") Sort sort,
+                                 @RequestParam(value = "sort", required = false, defaultValue = "NO") Sorting sort,
                                  @RequestParam(value = "pageNumber", required = false, defaultValue = "1") int pageNumber,
                                  @RequestParam(value = "pageSize", required = false, defaultValue = "5") int pageSize,
                                  @RequestParam("action") Action action) {
