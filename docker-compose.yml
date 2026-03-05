@@ -8,3 +8,13 @@ services:
       - POSTGRES_DB=market
     ports:
       - '6432:5432'
+
+  market_service:
+    build: .
+    container_name: shop-upp
+    ports:
+      - "8081:8081"
+    depends_on:
+      - market-postgres
+    environment:
+      - DATASOURCE.URL=jdbc:postgresql://market-postgres:5432/market
