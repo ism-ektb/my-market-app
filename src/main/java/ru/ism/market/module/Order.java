@@ -13,7 +13,6 @@ import java.util.List;
 @Getter
 @Entity
 @NoArgsConstructor
-@SuperBuilder
 @Table(name = "orders")
 public class Order {
     @Id

@@ -11,7 +11,6 @@ import java.util.List;
 
 @Entity
 @NoArgsConstructor
-@SuperBuilder
 @Getter
 @Setter
 @Table(name = "carts")

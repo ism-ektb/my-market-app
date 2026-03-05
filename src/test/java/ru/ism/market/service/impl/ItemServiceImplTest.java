@@ -22,7 +22,6 @@ import ru.ism.market.repository.ItemRepository;
 import ru.ism.market.repository.ItemWithQuantityRepo;
 import ru.ism.market.service.ItemService;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,8 +55,11 @@ class ItemServiceImplTest {
 
     @Test
     void getItemsById() {
+        Cart newCart = new Cart();
+        newCart.setId(1L);
+        newCart.setItemsWithQuantity(List.of(itemWithQuantity));
         when(itemRepository.findById(anyLong())).thenReturn(Optional.of(Item.builder().item_id(1).build()));
-        when(cartRepository.findById(anyLong())).thenReturn(Optional.of(Cart.builder().id(1).itemsWithQuantity(List.of(itemWithQuantity)).build()));
+        when(cartRepository.findById(anyLong())).thenReturn(Optional.of(newCart));
         ItemOutDto itemOutDto = itemService.getItem(1L);
         assertNotNull(itemOutDto);
         assertEquals(1L, itemOutDto.id());
@@ -66,8 +68,10 @@ class ItemServiceImplTest {
 
     @Test
     void getItemsById_cartEmpty() {
+        Cart newCart = new Cart();
+        newCart.setId(1L);
         when(itemRepository.findById(anyLong())).thenReturn(Optional.of(Item.builder().item_id(1).build()));
-        when(cartRepository.findById(anyLong())).thenReturn(Optional.of(Cart.builder().id(1).itemsWithQuantity(new ArrayList<>()).build()));
+        when(cartRepository.findById(anyLong())).thenReturn(Optional.of(newCart));
         ItemOutDto itemOutDto = itemService.getItem(1L);
         assertNotNull(itemOutDto);
         assertEquals(1L, itemOutDto.id());
@@ -76,10 +80,13 @@ class ItemServiceImplTest {
 
     @Test
     void searchItems() {
+        Cart newCart = new Cart();
+        newCart.setId(1L);
+        newCart.setItemsWithQuantity(List.of(itemWithQuantity));
         when(itemRepository.findAll(any(PageRequest.class)))
                 .thenReturn(new PageImpl<>(List.of(Item.builder().item_id(1L).build(), Item.builder().item_id(2L).build())));
         when(cartRepository.findById(anyLong()))
-                .thenReturn(Optional.of(Cart.builder().id(1).itemsWithQuantity(List.of(itemWithQuantity)).build()));
+                .thenReturn(Optional.of(newCart));
         ItemsOutDto dto = itemService.searchItems("", 0, 5, Sorting.NO);
         assertNotNull(dto);
         assertEquals(1, dto.items().size());

@@ -59,7 +59,10 @@ public class OrderServiceImpl implements OrderService {
         List<ItemWithQuantity> listInCart = cart.getItemsWithQuantity();
         long totalSum = listInCart.stream()
                 .mapToLong(iwq -> iwq.getItem().getPrice() * iwq.getQuantity()).sum();
-        Order order = orderRepository.save(Order.builder().itemsWithQuantity(listInCart).totalSum(totalSum).build());
+        Order newOrder = new Order();
+        newOrder.setItemsWithQuantity(listInCart);
+        newOrder.setTotalSum(totalSum);
+        Order order = orderRepository.save(newOrder);
         cart.setItemsWithQuantity(new ArrayList<>());
         return itemMapper.toOrderOutDto(order);
     }
