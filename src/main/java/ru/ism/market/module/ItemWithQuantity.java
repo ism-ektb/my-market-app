@@ -6,6 +6,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+/**
+ * Единица корзины и заказа. Состоит из сущности товара и его количества в заказе или корзине
+ */
 @Getter
 @Setter
 @Entity

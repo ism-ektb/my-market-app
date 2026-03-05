@@ -33,7 +33,7 @@ public class OrderController {
     }
 
     @PostMapping("/buy")
-    public String createOrder(){
+    public String createOrder() {
         var order = orderService.buy();
         return String.format("redirect:/orders/%d?newOrder=true", order.id());
     }

@@ -49,7 +49,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * Создание нового заказа из содержимого корзины
+     * Создание нового заказа из содержимого корзины. При этом содержимое корзины удаляется
      *
      * @return
      */
@@ -62,6 +62,5 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.save(Order.builder().itemsWithQuantity(listInCart).totalSum(totalSum).build());
         cart.setItemsWithQuantity(new ArrayList<>());
         return itemMapper.toOrderOutDto(order);
-
     }
 }

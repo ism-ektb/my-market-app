@@ -10,6 +10,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+/**
+ * Бин создает схему в базе данных перед запуском Liquibase
+ */
 @Component
 public class SchemaInitializer implements BeanPostProcessor {
 

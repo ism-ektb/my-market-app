@@ -75,7 +75,7 @@ public class ItemServiceImpl implements ItemService {
                 .orElse(null);
         if (itemWithQuantity == null) {
             if (action == Action.MINUS) {
-                return itemMapper.toItemOutDto(item,0);
+                return itemMapper.toItemOutDto(item, 0);
             }
             ItemWithQuantity newItemWithQuantity = itemWithQuantityRepo.save(ItemWithQuantity.builder()
                     .item(item).quantity(1).build());
@@ -173,7 +173,6 @@ public class ItemServiceImpl implements ItemService {
             return imageRepository.findById(id)
                     .map(Image::getImage_data)
                     .orElse(resource.getContentAsByteArray());
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

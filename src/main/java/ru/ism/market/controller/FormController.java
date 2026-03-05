@@ -11,6 +11,9 @@ import org.springframework.web.multipart.MultipartFile;
 import ru.ism.market.module.dto.in.ItemInDto;
 import ru.ism.market.service.ItemService;
 
+/**
+ * Вспомогательный контроллер для пополнения данными БД магазина
+ */
 @Controller
 @RequiredArgsConstructor
 public class FormController {
@@ -26,7 +29,8 @@ public class FormController {
     }
 
     @PostMapping("/form")
-    public String processForm(@ModelAttribute ItemInDto item, @RequestParam("imageFile") MultipartFile imageFile) {
+    public String processForm(@ModelAttribute ItemInDto item,
+                              @RequestParam("imageFile") MultipartFile imageFile) {
         try {
             itemService.createItem(item, imageFile);
         } catch (Exception e) {
