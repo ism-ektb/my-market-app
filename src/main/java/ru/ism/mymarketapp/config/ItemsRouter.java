@@ -10,7 +10,8 @@ import ru.ism.mymarketapp.handler.OrderHandler;
 @Configuration
 public class ItemsRouter {
     @Bean
-    public RouterFunction<ServerResponse> itemRouter(ItemHandler itemHandler, CartHandler cartHandler, OrderHandler orderHandler) {
+    public RouterFunction<ServerResponse> itemRouter(ItemHandler itemHandler, CartHandler cartHandler,
+                                                     OrderHandler orderHandler) {
         return RouterFunctions.route()
                 .GET("", itemHandler::getItems)
                 .GET("/", itemHandler::getItems)

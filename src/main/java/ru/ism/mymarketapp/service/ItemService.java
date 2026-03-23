@@ -1,6 +1,5 @@
 package ru.ism.mymarketapp.service;
 
-import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.dto.in.ItemInDto;
 import ru.ism.mymarketapp.module.dto.out.ItemOutDto;
@@ -49,9 +48,9 @@ public interface ItemService {
      * Сохранение информации о позиции
      *
      * @param itemInDto
-     * @param file
+
      */
-    Mono<Void> createItem(ItemInDto itemInDto, MultipartFile file) throws IOException;
+    Mono<Long> createItem(ItemInDto itemInDto) throws IOException;
 
     /**
      * Получение изображения из БД в виде списка байт

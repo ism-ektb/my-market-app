@@ -1,12 +1,15 @@
 package ru.ism.mymarketapp.service.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Mono;
+import ru.ism.mymarketapp.mapper.ItemMapper;
+import ru.ism.mymarketapp.module.Item;
 import ru.ism.mymarketapp.module.dto.in.ItemInDto;
 import ru.ism.mymarketapp.module.dto.out.ItemOutDto;
 import ru.ism.mymarketapp.module.dto.out.Paging;
 import ru.ism.mymarketapp.module.enums.Action;
+import ru.ism.mymarketapp.repository.ItemRepository;
 import ru.ism.mymarketapp.service.ItemService;
 
 import java.io.IOException;
@@ -14,7 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class ItemServiceImpl implements ItemService {
+
+    private final ItemRepository itemRepository;
+    private final ItemMapper itemMapper;
 
     /**
      * Получить товар из БД по ID
@@ -24,8 +31,7 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public Mono<ItemOutDto> getItem(String id) {
-        var dto = new ItemOutDto(1L, "title", "описание", "image/1.jpg", 1L, 10);
-        return Mono.just(dto);
+        return itemRepository.findById(Long.valueOf(id)).map(itemMapper::toItemOutDto);
     }
 
     /**
@@ -63,11 +69,10 @@ public class ItemServiceImpl implements ItemService {
      * Сохранение информации о позиции
      *
      * @param itemInDto
-     * @param file
      */
     @Override
-    public Mono<Void> createItem(ItemInDto itemInDto, MultipartFile file) throws IOException {
-        return null;
+    public Mono<Long> createItem(ItemInDto itemInDto) throws IOException {
+        return itemRepository.save(itemMapper.toItem(itemInDto)).map(Item::getItem_id);
     }
 
     /**
