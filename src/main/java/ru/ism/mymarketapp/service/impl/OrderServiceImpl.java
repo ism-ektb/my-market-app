@@ -38,7 +38,7 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
-    public Mono<Long> buy() {
-        return Mono.just(70L);
+    public Mono<Void> buy() {
+        return Mono.empty();
     }
 }

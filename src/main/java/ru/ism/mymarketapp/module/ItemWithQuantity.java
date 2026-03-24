@@ -19,4 +19,10 @@ public class ItemWithQuantity {
     private int quantity;
     @Transient
     private Item item;
+
+    public ItemWithQuantity(long item_with_quantity_id, long item_id, int quantity) {
+        this.item_with_quantity_id = item_with_quantity_id;
+        this.item_id = item_id;
+        this.quantity = quantity;
+    }
 }

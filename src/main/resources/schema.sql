@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS my_shop.carts_item_with_quantity
 (
     cart_id               BIGINT,
     item_with_quantity_id BIGINT,
+    number BIGINT UNIQUE,
     PRIMARY KEY (cart_id, item_with_quantity_id),
     FOREIGN KEY (cart_id) REFERENCES my_shop.carts (cart_id),
     FOREIGN KEY (item_with_quantity_id) REFERENCES my_shop.item_with_quantity (item_with_quantity_id) ON

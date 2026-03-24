@@ -22,5 +22,5 @@ public interface OrderService {
      * Создание нового заказа из содержимого корзины
      * @return
      */
-    Mono<Long> buy();
+    Mono<Void> buy();
 }
