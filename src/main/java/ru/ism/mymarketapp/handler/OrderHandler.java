@@ -39,14 +39,4 @@ public class OrderHandler {
                 Map.of("order", orderService.getOrder(orderId), "newOrder", newOrder));
     }
 
-    /**
-     * Подписаться на создание заказа из корзины
-     * @param request
-     * @return
-     */
-    public Mono<ServerResponse> bay(ServerRequest request) {
-        var order = orderService.buy();
-        return ServerResponse.ok().render(String.format("redirect:/orders/%d?newOrder=true", order.block()));
-    }
-
 }

@@ -40,3 +40,20 @@ CREATE TABLE IF NOT EXISTS my_shop.images
     image    BYTEA,
     CONSTRAINT fk_image_post foreign key (number) references my_shop.items (item_id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS my_shop.orders
+(
+    order_id BIGSERIAL PRIMARY KEY,
+    total BIGINT
+);
+
+CREATE TABLE IF NOT EXISTS my_shop.order_item_with_quantity(
+    id BIGINT,
+    item_with_quantity_id BIGINT,
+    number BIGINT,
+    total BIGINT,
+    PRIMARY KEY (id, item_with_quantity_id),
+    FOREIGN KEY (id) REFERENCES my_shop.orders (order_id),
+    FOREIGN KEY (item_with_quantity_id) REFERENCES my_shop.item_with_quantity (item_with_quantity_id) ON
+        DELETE CASCADE
+);

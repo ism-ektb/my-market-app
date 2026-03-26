@@ -5,7 +5,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import ru.ism.mymarketapp.mapper.ItemMapper;
@@ -24,13 +23,11 @@ import ru.ism.mymarketapp.service.ItemService;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-
-import static ru.ism.mymarketapp.module.enums.Sorting.ALPHA;
-import static ru.ism.mymarketapp.module.enums.Sorting.PRICE;
 
 @Service
 @RequiredArgsConstructor
@@ -110,6 +107,11 @@ public class ItemServiceImpl implements ItemService {
             case PRICE -> Sort.by("price");
             case NO -> Sort.by("item_id");
         };
+        Comparator<ItemOutDto> comparator = switch (Sorting.valueOf(query.getOrDefault("sort", "NO"))) {
+            case ALPHA -> Comparator.comparing(ItemOutDto::title);
+            case PRICE -> Comparator.comparing(ItemOutDto::price);
+            case NO -> Comparator.comparing(ItemOutDto::id);
+        };
         int pageNumber = Integer.parseInt(query.getOrDefault("pageNumber", "0"));
         int pageSize = Integer.parseInt(query.getOrDefault("pageSize", "10"));
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
@@ -123,6 +125,7 @@ public class ItemServiceImpl implements ItemService {
                             .map(iwq -> itemMapper.toItemMapperDto(iwq, item));
                 }).collectList()
                 .map(list -> {
+                    list.sort(comparator);
                     List<List<ItemOutDto>> list3 = new ArrayList<>(IntStream.range(0, list.size())
                             .boxed()
                             .collect(Collectors.groupingBy(e -> e / 3, Collectors.mapping(list::get, Collectors.toList()))).values());

@@ -5,7 +5,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Table(schema = "my_shop", name = "order")
+@Table(schema = "my_shop", name = "orders")
 @NoArgsConstructor
 @Data
 public class Order {

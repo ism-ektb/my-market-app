@@ -23,7 +23,6 @@ public class ItemsRouter {
                 .path("/cart", cartBuilder -> cartBuilder
                         .GET("/items", RequestPredicates.queryParam("action", t -> true), cartHandler::changeItemInCart)
                         .GET("/items", cartHandler::getCart))
-                .path("/buy", bayBuilder -> bayBuilder.POST("", orderHandler::bay))
                 .path("/orders", orderBuilders -> orderBuilders.GET("", orderHandler::getOrders)
                         .GET("/{id}", orderHandler::getOrderById))
                 .build();
