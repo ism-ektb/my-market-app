@@ -51,11 +51,4 @@ public interface ItemService {
 
      */
     Mono<Long> createItem(ItemInDto itemInDto) throws IOException;
-
-    /**
-     * Получение изображения из БД в виде списка байт
-     * @param id
-     * @return
-     */
-    byte[] getImage(long id);
 }

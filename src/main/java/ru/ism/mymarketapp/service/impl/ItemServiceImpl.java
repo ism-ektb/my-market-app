@@ -5,6 +5,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
@@ -30,6 +31,7 @@ import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
@@ -44,6 +46,7 @@ public class ItemServiceImpl implements ItemService {
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public Mono<ItemOutDto> getItem(String id) {
         return itemRepository.findById(Long.valueOf(id))
                 .flatMap(item -> cartItemWithQuantityRepo.findByNumber(item.getItem_id())
@@ -105,6 +108,7 @@ public class ItemServiceImpl implements ItemService {
      * @return
      */
 
+    @Transactional(readOnly = true)
     public Mono<List<List<ItemOutDto>>> searchItems(Map<String, String> query) {
         String search = query.getOrDefault("search", "") + "%";
         Sort sort = switch (Sorting.valueOf(query.getOrDefault("sort", "NO"))) {
@@ -159,23 +163,13 @@ public class ItemServiceImpl implements ItemService {
     }
 
     /**
-     * Получение изображения из БД в виде списка байт
-     *
-     * @param id
-     * @return
-     */
-    @Override
-    public byte[] getImage(long id) {
-        return new byte[0];
-    }
-
-    /**
      * Запрос пагинации
      *
      * @param query
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public Mono<Paging> getPage(Map<String, String> query) {
         String search = query.getOrDefault("search", "") + "%";
         Sort sort = switch (Sorting.valueOf(query.getOrDefault("sort", "NO"))) {
@@ -190,6 +184,5 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.findAllByTitleLikeIgnoreCase(search, pageable)
                 .hasElements()
                 .map(next -> new Paging(pageSize, pageNumber, pageNumber > 0, next));
-
     }
 }

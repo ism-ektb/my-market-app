@@ -2,6 +2,7 @@ package ru.ism.mymarketapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.mapper.ItemMapper;
@@ -16,6 +17,7 @@ import java.util.Comparator;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final CartItemWithQuantityRepo cartItemWithQuantityRepo;
@@ -30,6 +32,7 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public Flux<OrderOutDto> getOrders() {
         return orderRepository.findAll()
                 .flatMap(order -> orderItemWithQuantityRepo.findAllById(order.getOrder_id())
@@ -49,6 +52,7 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public Mono<OrderOutDto> getOrder(long orderId) {
         return orderItemWithQuantityRepo.findAllById(orderId)
                 .flatMap(oiwq -> itemWithQuantityRepo.findById(oiwq.getItem_with_quantity_id())

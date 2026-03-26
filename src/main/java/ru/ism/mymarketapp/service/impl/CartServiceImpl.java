@@ -2,6 +2,7 @@ package ru.ism.mymarketapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 import ru.ism.mymarketapp.mapper.ItemMapper;
@@ -19,6 +20,7 @@ import java.util.Comparator;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
@@ -34,6 +36,7 @@ public class CartServiceImpl implements CartService {
      * @return
      */
     @Override
+    @Transactional(readOnly = true)
     public Mono<CartOutDto> getItemInCart() {
 
         return itemWithQuantityRepo.findAllById(cartItemWithQuantityRepo
