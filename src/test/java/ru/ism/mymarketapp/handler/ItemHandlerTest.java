@@ -44,7 +44,7 @@ class ItemHandlerTest {
     }
 
     @Test
-    void getItem_adsInCart() {
+    void getItem_addInCart() {
         ItemOutDto itemOutDto = new ItemOutDto(1L, "", "", "", 1L, 1);
         when(itemService.addItemInCart(anyString(), any(Action.class))).thenReturn(Mono.just(itemOutDto));
         client.get()

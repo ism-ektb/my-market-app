@@ -8,7 +8,7 @@ import ru.ism.mymarketapp.service.OrderService;
 
 @Controller
 @RequiredArgsConstructor
-public class BayController {
+public class BuyController {
 
     private final OrderService orderService;
 

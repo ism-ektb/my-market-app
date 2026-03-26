@@ -11,14 +11,14 @@ import ru.ism.mymarketapp.module.dto.out.ItemShortOutDto;
 @Mapper(componentModel = "spring")
 public interface ItemMapper {
 
-    @Mapping(target = "id", source = "itemWithQuantity.item_id")
+    @Mapping(target = "id", source = "item.id")
     @Mapping(target = "count", source = "itemWithQuantity.quantity")
-    @Mapping(target = "imgPath", expression = "java(\"image/\" + item.getItem_id())")
+    @Mapping(target = "imgPath", expression = "java(\"image/\" + item.getId())")
     ItemOutDto toItemMapperDto(ItemWithQuantity itemWithQuantity, Item item);
 
-    @Mapping(target = "item_id", ignore = true)
+    @Mapping(target = "id", ignore = true)
     Item toItem(ItemInDto itemInDto);
 
-    @Mapping(target = "id", source = "item.item_id")
+    @Mapping(target = "id", source = "item.id")
     ItemShortOutDto toItemShortOutDto(Item item, int count);
 }

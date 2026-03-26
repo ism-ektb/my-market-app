@@ -10,12 +10,19 @@ import ru.ism.mymarketapp.module.Image;
 import ru.ism.mymarketapp.repository.ImageRepository;
 import ru.ism.mymarketapp.service.ImageService;
 
+import java.util.Base64;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class ImageServiceImpl implements ImageService {
 
     private final ImageRepository photos;
+    private final byte[] PNG_PLACEHOLDER =
+            Base64.getDecoder().decode(
+                    "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/axu2kQAAAAASUVORK5CYII=");
+
+
 
     public Mono<Void> savePhoto(long item_id, FilePart filePart) {
         final int maxBytes = 5 * 1024 * 1024; // 5МБ
@@ -29,7 +36,7 @@ public class ImageServiceImpl implements ImageService {
                         Mono<Image> upsert = Mono.defer(() -> {
                             Image fresh = new Image();
                             fresh.setNumber(item_id);
-                            fresh.setImage(bytes);
+                            fresh.setImage(bytes != null ? bytes : PNG_PLACEHOLDER);
                             return photos.save(fresh);
                         });
 
@@ -42,6 +49,11 @@ public class ImageServiceImpl implements ImageService {
 
     @Transactional(readOnly = true)
     public Mono<Image> getPhoto(Long item_id) {
+        Image def = new Image();
+        def.setNumber(item_id);
+        def.setImage(PNG_PLACEHOLDER);
+        def.setNumber(item_id);
         return photos.findByNumber(item_id);
+           //     .switchIfEmpty(Mono.just(def));
     }
 }

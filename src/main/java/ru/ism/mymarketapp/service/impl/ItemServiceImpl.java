@@ -42,16 +42,19 @@ public class ItemServiceImpl implements ItemService {
     /**
      * Получить товар из БД по ID проверив есть ли он в корзине
      *
-     * @param id
+     * @param
      * @return
      */
     @Override
     @Transactional(readOnly = true)
-    public Mono<ItemOutDto> getItem(String id) {
-        return itemRepository.findById(Long.valueOf(id))
-                .flatMap(item -> cartItemWithQuantityRepo.findByNumber(item.getItem_id())
-                        .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id())
-                                .map(iwq -> itemMapper.toItemMapperDto(iwq, item))));
+    public Mono<ItemOutDto> getItem(String item_id) {
+        long id = Long.parseLong(item_id);
+        return itemRepository.findById(id)
+                .flatMap(item -> cartItemWithQuantityRepo.findByNumber(id)
+                        .map(CartItemWithQuantity::getItem_with_quantity_id)
+                        .flatMap(itemWithQuantityRepo::findById)
+                        .switchIfEmpty(Mono.just(new ItemWithQuantity(0, id, 0)))
+                        .map(iwq -> itemMapper.toItemMapperDto(iwq, item)));
     }
 
     /**
@@ -114,7 +117,7 @@ public class ItemServiceImpl implements ItemService {
         Sort sort = switch (Sorting.valueOf(query.getOrDefault("sort", "NO"))) {
             case ALPHA -> Sort.by("title");
             case PRICE -> Sort.by("price");
-            case NO -> Sort.by("item_id");
+            case NO -> Sort.by("id");
         };
         Comparator<ItemOutDto> comparator = switch (Sorting.valueOf(query.getOrDefault("sort", "NO"))) {
             case ALPHA -> Comparator.comparing(ItemOutDto::title);
@@ -127,10 +130,10 @@ public class ItemServiceImpl implements ItemService {
 
         return itemRepository.findAllByTitleLikeIgnoreCase(search, pageable)
                 .flatMap(item -> {
-                    return cartItemWithQuantityRepo.findByNumber(item.getItem_id())
+                    return cartItemWithQuantityRepo.findByNumber(item.getId())
                             .map(CartItemWithQuantity::getItem_with_quantity_id)
                             .flatMap(itemWithQuantityRepo::findById)
-                            .switchIfEmpty(Mono.just(new ItemWithQuantity(0, item.getItem_id(), 0)))
+                            .switchIfEmpty(Mono.just(new ItemWithQuantity(0, item.getId(), 0)))
                             .map(iwq -> itemMapper.toItemMapperDto(iwq, item));
                 }).collectList()
                 .map(list -> {
@@ -159,7 +162,7 @@ public class ItemServiceImpl implements ItemService {
      */
     @Override
     public Mono<Long> createItem(ItemInDto itemInDto) throws IOException {
-        return itemRepository.save(itemMapper.toItem(itemInDto)).map(Item::getItem_id);
+        return itemRepository.save(itemMapper.toItem(itemInDto)).map(Item::getId);
     }
 
     /**
@@ -175,11 +178,11 @@ public class ItemServiceImpl implements ItemService {
         Sort sort = switch (Sorting.valueOf(query.getOrDefault("sort", "NO"))) {
             case ALPHA -> Sort.by("title");
             case PRICE -> Sort.by("price");
-            case NO -> Sort.by("item_id");
+            case NO -> Sort.by("id");
         };
         int pageNumber = Integer.parseInt(query.getOrDefault("pageNumber", "0"));
         int pageSize = Integer.parseInt(query.getOrDefault("pageSize", "10"));
-        Pageable pageable = PageRequest.of(pageNumber * pageSize + 1, 1, sort);
+        Pageable pageable = PageRequest.of((pageNumber + 1) * pageSize, 1, sort);
 
         return itemRepository.findAllByTitleLikeIgnoreCase(search, pageable)
                 .hasElements()

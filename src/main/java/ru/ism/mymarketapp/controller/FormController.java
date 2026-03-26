@@ -13,6 +13,7 @@ import ru.ism.mymarketapp.service.ImageService;
 import ru.ism.mymarketapp.service.ItemService;
 
 import java.io.IOException;
+import java.util.Base64;
 
 
 /**

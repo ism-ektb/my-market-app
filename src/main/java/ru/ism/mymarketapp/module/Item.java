@@ -10,7 +10,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Data
 public class Item {
     @Id
-    private long item_id;
+    private long id;
     private String title;
     private String description;
     private long price;
