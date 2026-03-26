@@ -11,7 +11,6 @@ import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.dto.in.ItemInDto;
 import ru.ism.mymarketapp.service.ImageService;
 import ru.ism.mymarketapp.service.ItemService;
-import ru.ism.mymarketapp.service.OrderService;
 
 import java.io.IOException;
 
@@ -25,7 +24,6 @@ public class FormController {
 
     private final ImageService imageService;
     private final ItemService itemService;
-    private final OrderService orderService;
 
     @GetMapping("/form")
     public Mono<String> showForm(Model model,
@@ -38,9 +36,7 @@ public class FormController {
     @PostMapping("/form")
     public Mono<String> processForm(@ModelAttribute ItemInDto item,
                                     @RequestPart("imageFile") FilePart photo) {
-
         try {
-
             return itemService.createItem(item)
                     .flatMap(item_id ->
                             imageService.savePhoto(item_id, photo))
@@ -57,11 +53,5 @@ public class FormController {
                         .contentType(MediaType.IMAGE_JPEG)
                         .body(photo.getImage())
                 );
-    }
-
-    @PostMapping("/buy")
-    public Mono<String> createOrder() {
-        return orderService.buy()
-                .map(order_id -> String.format("redirect:/orders/%d?newOrder=true", order_id));
     }
 }

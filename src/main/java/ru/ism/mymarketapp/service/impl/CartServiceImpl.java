@@ -7,12 +7,15 @@ import reactor.core.scheduler.Schedulers;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
 import ru.ism.mymarketapp.module.dto.out.CartOutDto;
+import ru.ism.mymarketapp.module.dto.out.ItemOutDto;
 import ru.ism.mymarketapp.module.enums.Action;
 import ru.ism.mymarketapp.repository.CartItemWithQuantityRepo;
 import ru.ism.mymarketapp.repository.CartRepository;
 import ru.ism.mymarketapp.repository.ItemRepository;
 import ru.ism.mymarketapp.repository.ItemWithQuantityRepo;
 import ru.ism.mymarketapp.service.CartService;
+
+import java.util.Comparator;
 
 @Component
 @RequiredArgsConstructor
@@ -25,7 +28,8 @@ public class CartServiceImpl implements CartService {
     private final ItemMapper itemMapper;
 
     /**
-     * Получить список товаров в корзине
+     * Получаем список товаров в корзине, добавляем количество каждой позиции
+     * рассчитываем сумму за все товары
      *
      * @return
      */
@@ -35,8 +39,8 @@ public class CartServiceImpl implements CartService {
         return itemWithQuantityRepo.findAllById(cartItemWithQuantityRepo
                         .findAll()
                         .map(CartItemWithQuantity::getItem_with_quantity_id))
-                .publishOn(Schedulers.boundedElastic())
-                .map(iwq -> itemMapper.toItemMapperDto(iwq, itemRepository.findById(iwq.getItem_id()).block()))
+                .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
+                        .map(item -> itemMapper.toItemMapperDto(iwq, item)))
                 .collectList()
                 .map(list -> {
                     long sum = list.stream()
@@ -47,7 +51,10 @@ public class CartServiceImpl implements CartService {
     }
 
     /**
-     * Изменить число товаров с номером itemId в корзине
+     * Изменить число товаров с номером itemId в корзине.
+     * Находим товар в корзине число элементов которого надо заменить
+     * Изменяем число элементов, вносим изменение в БД.
+     * Загружаем корзину из БД. Преобразуем ее в ДТО.
      *
      * @param itemId
      * @param action
@@ -56,43 +63,35 @@ public class CartServiceImpl implements CartService {
     @Override
     public Mono<CartOutDto> changeItemsInCart(long itemId, Action action) {
 
-        return itemWithQuantityRepo.findAllById(cartItemWithQuantityRepo
-                        .findAll()
-                        .map(CartItemWithQuantity::getItem_with_quantity_id))
-                .publishOn(Schedulers.boundedElastic())
-                .map(iwq -> {
-                            if (iwq.getItem_id() == itemId) {
-                                switch (action) {
-                                    case PLUS -> {
-                                        iwq.setQuantity(iwq.getQuantity() + 1);
-                                        itemWithQuantityRepo.save(iwq).block();
-                                    }
-                                    case MINUS -> {
-                                        if (iwq.getQuantity() > 1) {
-                                            iwq.setQuantity(iwq.getQuantity() - 1);
-                                            itemWithQuantityRepo.save(iwq).block();
-                                        } else {
-                                            iwq.setQuantity(0);
-                                            itemWithQuantityRepo.deleteById(iwq.getItem_id()).block();
-                                        }
-                                    }
-                                    case DELETE -> {
-                                        iwq.setQuantity(0);
-                                        itemWithQuantityRepo.deleteById(iwq.getItem_id()).block();
-                                    }
+        return cartItemWithQuantityRepo.findByNumber(itemId)
+                .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id()))
+                .flatMap(iwq ->
+                        switch (action) {
+                            case PLUS -> {
+                                iwq.setQuantity(iwq.getQuantity() + 1);
+                                yield itemWithQuantityRepo.save(iwq);
+                            }
+                            case MINUS -> {
+                                if (iwq.getQuantity() > 1) {
+                                    iwq.setQuantity(iwq.getQuantity() - 1);
+                                    yield itemWithQuantityRepo.save(iwq);
+                                } else {
+                                    yield itemWithQuantityRepo.deleteById(iwq.getItem_id());
                                 }
                             }
-                            return iwq;
-                        }
-                ).filter(iwq -> iwq.getQuantity() > 0)
-                .publishOn(Schedulers.boundedElastic())
-                .map(iwq -> itemMapper.toItemMapperDto(iwq, itemRepository.findById(iwq.getItem_id()).block()))
-                .collectList()
-                .map(list -> {
-                    long sum = list.stream()
-                            .map(item -> item.count() * item.price())
-                            .mapToLong(Long::longValue).sum();
-                    return new CartOutDto(list, sum);
-                });
+                            case DELETE -> {
+                                yield itemWithQuantityRepo.deleteById(iwq.getItem_id());
+                            }}).then(cartItemWithQuantityRepo.findAll()
+                        .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id())
+                                .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
+                                        .map(item -> itemMapper.toItemMapperDto(iwq, item))))
+                        .collectList()
+                        .map(list -> {
+                            list.sort(Comparator.comparing(ItemOutDto::id));
+                            long sum = list.stream()
+                                    .map(item -> item.count() * item.price())
+                                    .mapToLong(Long::longValue).sum();
+                            return new CartOutDto(list, sum);
+                        }));
     }
 }

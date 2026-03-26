@@ -13,7 +13,6 @@ import ru.ism.mymarketapp.repository.*;
 import ru.ism.mymarketapp.service.OrderService;
 
 import java.util.Comparator;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +37,6 @@ public class OrderServiceImpl implements OrderService {
                                 .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
                                 .map(item -> itemMapper.toItemShortOutDto(item, iwq.getQuantity()))))
                         .collectList()
-
                         .map(list -> {list.sort(Comparator.comparing(ItemShortOutDto::id));
                             return new OrderOutDto(order.getOrder_id(), list, order.getTotal());}));
     }
@@ -63,7 +61,6 @@ public class OrderServiceImpl implements OrderService {
                             .mapToLong(i -> i).sum();
                     return new OrderOutDto(orderId, list, total);
                 });
-
     }
 
     /**
@@ -97,7 +94,6 @@ public class OrderServiceImpl implements OrderService {
                                     .then(orderRepository.save(order))
                                     .map(Order::getOrder_id);
                         }));
-
     }
 }
 

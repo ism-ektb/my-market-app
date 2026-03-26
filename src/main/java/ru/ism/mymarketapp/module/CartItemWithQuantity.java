@@ -4,6 +4,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.relational.core.mapping.Table;
 
+/**
+ * Сущность объединяет корзину и сущность включающую товар и его количество
+ */
 @Data
 @NoArgsConstructor
 @Table(schema = "my_shop", name = "carts_item_with_quantity")

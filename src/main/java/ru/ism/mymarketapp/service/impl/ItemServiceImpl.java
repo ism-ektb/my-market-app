@@ -6,7 +6,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
 import ru.ism.mymarketapp.module.Item;
@@ -39,18 +38,24 @@ public class ItemServiceImpl implements ItemService {
     private final ItemWithQuantityRepo itemWithQuantityRepo;
 
     /**
-     * Получить товар из БД по ID
+     * Получить товар из БД по ID проверив есть ли он в корзине
      *
      * @param id
      * @return
      */
     @Override
     public Mono<ItemOutDto> getItem(String id) {
-        return itemRepository.findById(Long.valueOf(id)).map(itemMapper::toItemOutDto);
+        return itemRepository.findById(Long.valueOf(id))
+                .flatMap(item -> cartItemWithQuantityRepo.findByNumber(item.getItem_id())
+                        .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id())
+                                .map(iwq -> itemMapper.toItemMapperDto(iwq, item))));
     }
 
     /**
      * Изменить количество товара в корзине на единицу
+     * Валидируем itemId, проверяем находится ли товар уже в корзине
+     * Изменяем число товара в корзине, сохраняем
+     * Загружаем товар из базы и преобразуем в ДТО
      *
      * @param itemId
      * @param action
@@ -87,8 +92,8 @@ public class ItemServiceImpl implements ItemService {
                                 return itemWithQuantityRepo.deleteById(iwq.getItem_with_quantity_id()).then(Mono.just(iwq));
                             }
                         })
-                        .publishOn(Schedulers.boundedElastic())
-                        .map(iwq -> itemMapper.toItemMapperDto(iwq, itemRepository.findById(item_id).block())));
+                        .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
+                                .map(item -> itemMapper.toItemMapperDto(iwq, item))));
 
     }
 
@@ -141,8 +146,6 @@ public class ItemServiceImpl implements ItemService {
                     }
                     return list3;
                 });
-
-
     }
 
     /**
