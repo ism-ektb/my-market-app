@@ -19,7 +19,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @Testcontainers
-
 class OrderServiceImplIntegralTest {
 
     @Container

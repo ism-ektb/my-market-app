@@ -2,8 +2,14 @@ package ru.ism.mymarketapp.service.impl;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.r2dbc.autoconfigure.R2dbcConnectionDetails;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.Item;
@@ -23,7 +29,13 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Testcontainers
 class OrderServiceImplTest {
+
+    @Container
+    @ServiceConnection(type = {R2dbcConnectionDetails.class})
+    static PostgreSQLContainer<?> postgreSQLContainer =
+            new PostgreSQLContainer<>("postgres:15");
 
     @Autowired
     private OrderService orderService;
@@ -44,7 +56,7 @@ class OrderServiceImplTest {
         order.setTotal(20);
         when(orderRepository.findAll()).thenReturn(Flux.just(order));
         Item item = new Item();
-        item.setItem_id(1L);
+        item.setId(1L);
         item.setPrice(10L);
         when(itemRepository.findById(anyLong())).thenReturn(Mono.just(item));
         ItemWithQuantity iwq = new ItemWithQuantity();
