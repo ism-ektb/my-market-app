@@ -23,23 +23,18 @@ public class ImageServiceImpl implements ImageService {
                     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/axu2kQAAAAASUVORK5CYII=");
 
 
-
     public Mono<Void> savePhoto(long item_id, FilePart filePart) {
-        final int maxBytes = 5 * 1024 * 1024; // 5МБ
-
         return DataBufferUtils.join(filePart.content())
                 .flatMap(dataBuffer -> {
                     try {
                         byte[] bytes = new byte[dataBuffer.readableByteCount()];
                         dataBuffer.read(bytes);
-
                         Mono<Image> upsert = Mono.defer(() -> {
                             Image fresh = new Image();
-                            fresh.setNumber(item_id);
+                            fresh.setItemId(item_id);
                             fresh.setImage(bytes != null ? bytes : PNG_PLACEHOLDER);
                             return photos.save(fresh);
                         });
-
                         return upsert.then();
                     } finally {
                         DataBufferUtils.release(dataBuffer);
@@ -50,10 +45,9 @@ public class ImageServiceImpl implements ImageService {
     @Transactional(readOnly = true)
     public Mono<Image> getPhoto(Long item_id) {
         Image def = new Image();
-        def.setNumber(item_id);
+        def.setItemId(item_id);
         def.setImage(PNG_PLACEHOLDER);
-        def.setNumber(item_id);
-        return photos.findByNumber(item_id);
-           //     .switchIfEmpty(Mono.just(def));
+        return photos.findByItemId(item_id)
+                .switchIfEmpty(Mono.just(def));
     }
 }

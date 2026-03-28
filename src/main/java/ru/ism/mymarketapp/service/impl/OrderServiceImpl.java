@@ -35,13 +35,16 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(readOnly = true)
     public Flux<OrderOutDto> getOrders() {
         return orderRepository.findAll()
-                .flatMap(order -> orderItemWithQuantityRepo.findAllById(order.getOrder_id())
+                .flatMap(order -> orderItemWithQuantityRepo.findAllByOrderId(order.getOrder_id())
                         .flatMap(oiwq -> itemWithQuantityRepo.findById(oiwq.getItem_with_quantity_id())
                                 .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
-                                .map(item -> itemMapper.toItemShortOutDto(item, iwq.getQuantity()))))
+                                        .map(item -> itemMapper.toItemShortOutDto(item, iwq.getQuantity()))))
                         .collectList()
-                        .map(list -> {list.sort(Comparator.comparing(ItemShortOutDto::id));
-                            return new OrderOutDto(order.getOrder_id(), list, order.getTotal());}));
+                        .map(list -> {
+                            list.sort(Comparator.comparing(ItemShortOutDto::id));
+                            long totalSum = list.stream().mapToLong(i -> (long) i.count() * i.price()).sum();
+                            return new OrderOutDto(order.getOrder_id(), list, totalSum);
+                        }));
     }
 
 
@@ -54,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     @Transactional(readOnly = true)
     public Mono<OrderOutDto> getOrder(long orderId) {
-        return orderItemWithQuantityRepo.findAllById(orderId)
+        return orderItemWithQuantityRepo.findAllByOrderId(orderId)
                 .flatMap(oiwq -> itemWithQuantityRepo.findById(oiwq.getItem_with_quantity_id())
                         .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
                                 .map(item -> itemMapper.toItemShortOutDto(item, iwq.getQuantity()))))
@@ -68,7 +71,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     /**
-     * Создание нового заказа из содержимого корзины
+     * Создание нового заказа из содержимого корзины.
+     * Создаем пустой заказ. Сохраняем номер заказа в переменную.
+     * Перебираем содержимое корзины. Создаём новые сущности содержимого заказа на основе содержимого корзины.
+     * Удаляем содержимое корзины.
+     * Возвращаем номер заказа
      *
      * @return
      */
@@ -76,28 +83,23 @@ public class OrderServiceImpl implements OrderService {
     public Mono<Long> buy() {
         Order newOrder = new Order();
         return orderRepository.save(newOrder)
+                .map(order -> {
+                    newOrder.setOrder_id(order.getOrder_id());
+                    return order;
+                })
                 .flatMap(order -> cartItemWithQuantityRepo.findAll()
                         .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id())
                                 .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
                                         .map(item -> {
                                             var oiwq = new OrderItemWithQuantity();
-                                            oiwq.setId(order.getOrder_id());
+                                            oiwq.setOrderId(order.getOrder_id());
                                             oiwq.setItem_with_quantity_id(ciwq.getItem_with_quantity_id());
-                                            oiwq.setNumber(ciwq.getNumber());
-                                            oiwq.setTotal(item.getPrice() * iwq.getQuantity());
+                                            oiwq.setItemId(ciwq.getItemId());
                                             return oiwq;
                                         })))
                         .flatMap(orderItemWithQuantityRepo::save)
-                        .collectList()
-                        .flatMap(list -> {
-                            long total = list.stream()
-                                    .map(OrderItemWithQuantity::getTotal)
-                                    .mapToLong(i -> i).sum();
-                            order.setTotal(total);
-                            return cartItemWithQuantityRepo.deleteAll()
-                                    .then(orderRepository.save(order))
-                                    .map(Order::getOrder_id);
-                        }));
+                        .then(cartItemWithQuantityRepo.deleteAll())
+                        .then(Mono.just(newOrder.getOrder_id())));
     }
 }
 

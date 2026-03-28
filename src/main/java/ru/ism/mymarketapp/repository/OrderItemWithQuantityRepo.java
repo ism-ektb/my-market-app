@@ -5,5 +5,5 @@ import reactor.core.publisher.Flux;
 import ru.ism.mymarketapp.module.OrderItemWithQuantity;
 
 public interface OrderItemWithQuantityRepo extends ReactiveCrudRepository<OrderItemWithQuantity, Long> {
-    Flux<OrderItemWithQuantity> findAllById(long orderId);
+    Flux<OrderItemWithQuantity> findAllByOrderId(long orderId);
 }

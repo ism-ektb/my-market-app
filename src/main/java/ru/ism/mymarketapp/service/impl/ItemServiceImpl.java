@@ -50,7 +50,7 @@ public class ItemServiceImpl implements ItemService {
     public Mono<ItemOutDto> getItem(String item_id) {
         long id = Long.parseLong(item_id);
         return itemRepository.findById(id)
-                .flatMap(item -> cartItemWithQuantityRepo.findByNumber(id)
+                .flatMap(item -> cartItemWithQuantityRepo.findByItemId(id)
                         .map(CartItemWithQuantity::getItem_with_quantity_id)
                         .flatMap(itemWithQuantityRepo::findById)
                         .switchIfEmpty(Mono.just(new ItemWithQuantity(0, id, 0)))
@@ -82,7 +82,7 @@ public class ItemServiceImpl implements ItemService {
                             newIwq.setItem_id(item_id);
                             newIwq.setQuantity(0);
                             return itemWithQuantityRepo.save(newIwq)
-                                    .map(ItemWithQuantity::getItem_with_quantity_id)
+                                    .map(ItemWithQuantity::getId)
                                     .flatMap(l -> cartItemWithQuantityRepo.save(new CartItemWithQuantity(l, 1L, newIwq.getItem_id())))
                                     .flatMap(c -> itemWithQuantityRepo.findById(c.getItem_with_quantity_id()));
                         }))
@@ -95,7 +95,7 @@ public class ItemServiceImpl implements ItemService {
                                 return itemWithQuantityRepo.save(iwq);
                             } else {
                                 iwq.setQuantity(0);
-                                return itemWithQuantityRepo.deleteById(iwq.getItem_with_quantity_id()).then(Mono.just(iwq));
+                                return itemWithQuantityRepo.deleteById(iwq.getId()).then(Mono.just(iwq));
                             }
                         })
                         .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
@@ -130,7 +130,7 @@ public class ItemServiceImpl implements ItemService {
 
         return itemRepository.findAllByTitleLikeIgnoreCase(search, pageable)
                 .flatMap(item -> {
-                    return cartItemWithQuantityRepo.findByNumber(item.getId())
+                    return cartItemWithQuantityRepo.findByItemId(item.getId())
                             .map(CartItemWithQuantity::getItem_with_quantity_id)
                             .flatMap(itemWithQuantityRepo::findById)
                             .switchIfEmpty(Mono.just(new ItemWithQuantity(0, item.getId(), 0)))

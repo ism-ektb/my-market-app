@@ -5,5 +5,5 @@ import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.Image;
 
 public interface ImageRepository extends ReactiveCrudRepository<Image, Long> {
-    Mono<Image> findByNumber(long item_id);
+    Mono<Image> findByItemId(long item_id);
 }

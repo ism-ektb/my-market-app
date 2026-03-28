@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
 import ru.ism.mymarketapp.module.dto.out.CartOutDto;
@@ -66,7 +65,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public Mono<CartOutDto> changeItemsInCart(long itemId, Action action) {
 
-        return cartItemWithQuantityRepo.findByNumber(itemId)
+        return cartItemWithQuantityRepo.findByItemId(itemId)
                 .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id()))
                 .flatMap(iwq ->
                         switch (action) {
@@ -84,7 +83,8 @@ public class CartServiceImpl implements CartService {
                             }
                             case DELETE -> {
                                 yield itemWithQuantityRepo.deleteById(iwq.getItem_id());
-                            }}).then(cartItemWithQuantityRepo.findAll()
+                            }
+                        }).then(cartItemWithQuantityRepo.findAll()
                         .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id())
                                 .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
                                         .map(item -> itemMapper.toItemMapperDto(iwq, item))))
