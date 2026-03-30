@@ -23,4 +23,9 @@ public class ItemWithQuantity {
         this.item_id = item_id;
         this.quantity = quantity;
     }
+
+    public ItemWithQuantity(long item_id, int quantity) {
+        this.item_id = item_id;
+        this.quantity = quantity;
+    }
 }

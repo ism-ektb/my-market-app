@@ -14,7 +14,6 @@ import java.util.Base64;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ImageServiceImpl implements ImageService {
 
     private final ImageRepository photos;
@@ -22,7 +21,8 @@ public class ImageServiceImpl implements ImageService {
             Base64.getDecoder().decode(
                     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMB/axu2kQAAAAASUVORK5CYII=");
 
-
+    @Transactional
+    @Override
     public Mono<Void> savePhoto(long item_id, FilePart filePart) {
         return DataBufferUtils.join(filePart.content())
                 .flatMap(dataBuffer -> {
@@ -42,7 +42,7 @@ public class ImageServiceImpl implements ImageService {
                 });
     }
 
-    @Transactional(readOnly = true)
+    @Override
     public Mono<Image> getPhoto(Long item_id) {
         Image def = new Image();
         def.setItemId(item_id);

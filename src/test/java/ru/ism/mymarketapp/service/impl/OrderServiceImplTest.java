@@ -23,6 +23,7 @@ import ru.ism.mymarketapp.repository.OrderItemWithQuantityRepo;
 import ru.ism.mymarketapp.repository.OrderRepository;
 import ru.ism.mymarketapp.service.OrderService;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,7 +54,6 @@ class OrderServiceImplTest {
     void getOrders() {
         Order order = new Order();
         order.setOrder_id(1L);
-        order.setTotal(20);
         when(orderRepository.findAll()).thenReturn(Flux.just(order));
         Item item = new Item();
         item.setId(1L);
@@ -65,9 +65,9 @@ class OrderServiceImplTest {
         iwq.setItem_id(1L);
         when(itemWithQuantityRepo.findById(anyLong())).thenReturn(Mono.just(iwq));
         OrderItemWithQuantity oiwq = new OrderItemWithQuantity();
-        oiwq.setId(1L);
+        oiwq.setOrderId(1L);
         oiwq.setItem_with_quantity_id(1L);
-        when(orderItemWithQuantityRepo.findAllById(anyLong())).thenReturn(Flux.just(oiwq));
+        when(orderItemWithQuantityRepo.findAllByOrderId(anyLong())).thenReturn(Flux.just(oiwq));
 
         List<OrderOutDto> list = orderService.getOrders().collectList().block();
         assertNotNull(list);

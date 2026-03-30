@@ -7,22 +7,15 @@ import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
 import ru.ism.mymarketapp.module.dto.out.CartOutDto;
-import ru.ism.mymarketapp.module.dto.out.ItemOutDto;
-import ru.ism.mymarketapp.module.enums.Action;
 import ru.ism.mymarketapp.repository.CartItemWithQuantityRepo;
-import ru.ism.mymarketapp.repository.CartRepository;
 import ru.ism.mymarketapp.repository.ItemRepository;
 import ru.ism.mymarketapp.repository.ItemWithQuantityRepo;
 import ru.ism.mymarketapp.service.CartService;
 
-import java.util.Comparator;
-
 @Component
 @RequiredArgsConstructor
-@Transactional
 public class CartServiceImpl implements CartService {
 
-    private final CartRepository cartRepository;
     private final ItemRepository itemRepository;
     private final ItemWithQuantityRepo itemWithQuantityRepo;
     private final CartItemWithQuantityRepo cartItemWithQuantityRepo;
@@ -35,7 +28,6 @@ public class CartServiceImpl implements CartService {
      * @return
      */
     @Override
-    @Transactional(readOnly = true)
     public Mono<CartOutDto> getItemInCart() {
 
         return itemWithQuantityRepo.findAllById(cartItemWithQuantityRepo
@@ -50,51 +42,5 @@ public class CartServiceImpl implements CartService {
                             .mapToLong(Long::longValue).sum();
                     return new CartOutDto(list, sum);
                 });
-    }
-
-    /**
-     * Изменить число товаров с номером itemId в корзине.
-     * Находим товар в корзине число элементов которого надо заменить
-     * Изменяем число элементов, вносим изменение в БД.
-     * Загружаем корзину из БД. Преобразуем ее в ДТО.
-     *
-     * @param itemId
-     * @param action
-     * @return
-     */
-    @Override
-    public Mono<CartOutDto> changeItemsInCart(long itemId, Action action) {
-
-        return cartItemWithQuantityRepo.findByItemId(itemId)
-                .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id()))
-                .flatMap(iwq ->
-                        switch (action) {
-                            case PLUS -> {
-                                iwq.setQuantity(iwq.getQuantity() + 1);
-                                yield itemWithQuantityRepo.save(iwq);
-                            }
-                            case MINUS -> {
-                                if (iwq.getQuantity() > 1) {
-                                    iwq.setQuantity(iwq.getQuantity() - 1);
-                                    yield itemWithQuantityRepo.save(iwq);
-                                } else {
-                                    yield itemWithQuantityRepo.deleteById(iwq.getItem_id());
-                                }
-                            }
-                            case DELETE -> {
-                                yield itemWithQuantityRepo.deleteById(iwq.getItem_id());
-                            }
-                        }).then(cartItemWithQuantityRepo.findAll()
-                        .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id())
-                                .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
-                                        .map(item -> itemMapper.toItemMapperDto(iwq, item))))
-                        .collectList()
-                        .map(list -> {
-                            list.sort(Comparator.comparing(ItemOutDto::id));
-                            long sum = list.stream()
-                                    .map(item -> item.count() * item.price())
-                                    .mapToLong(Long::longValue).sum();
-                            return new CartOutDto(list, sum);
-                        }));
     }
 }

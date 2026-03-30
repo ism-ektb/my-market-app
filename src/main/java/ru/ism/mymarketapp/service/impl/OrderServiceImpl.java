@@ -17,7 +17,6 @@ import java.util.Comparator;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final CartItemWithQuantityRepo cartItemWithQuantityRepo;
@@ -32,7 +31,6 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
-    @Transactional(readOnly = true)
     public Flux<OrderOutDto> getOrders() {
         return orderRepository.findAll()
                 .flatMap(order -> orderItemWithQuantityRepo.findAllByOrderId(order.getOrder_id())
@@ -47,7 +45,6 @@ public class OrderServiceImpl implements OrderService {
                         }));
     }
 
-
     /**
      * Получение заказа по id
      *
@@ -55,7 +52,6 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
-    @Transactional(readOnly = true)
     public Mono<OrderOutDto> getOrder(long orderId) {
         return orderItemWithQuantityRepo.findAllByOrderId(orderId)
                 .flatMap(oiwq -> itemWithQuantityRepo.findById(oiwq.getItem_with_quantity_id())
@@ -80,6 +76,7 @@ public class OrderServiceImpl implements OrderService {
      * @return
      */
     @Override
+    @Transactional
     public Mono<Long> buy() {
         Order newOrder = new Order();
         return orderRepository.save(newOrder)

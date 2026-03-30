@@ -6,6 +6,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.enums.Action;
+import ru.ism.mymarketapp.service.CartItemService;
 import ru.ism.mymarketapp.service.CartService;
 
 import java.util.Map;
@@ -15,6 +16,7 @@ import java.util.Map;
 public class CartHandler {
 
     private final CartService cartService;
+    private final CartItemService cartItemService;
 
     /**
      * Подписаться на корзину с заказами
@@ -39,10 +41,9 @@ public class CartHandler {
                 .map(Action::valueOf)
                 .orElseThrow(() -> new IllegalArgumentException("action is required"));
         return ServerResponse.ok()
-                .render("cart", Map.of("cart", cartService.changeItemsInCart(itemid, action)));
+                .render("cart", Map.of("cart", cartItemService.changeItemInCart(itemid, action)
+                        .then(cartService.getItemInCart())));
     }
-
-
 
 
 }

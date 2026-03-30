@@ -13,8 +13,6 @@ import ru.ism.mymarketapp.service.ImageService;
 import ru.ism.mymarketapp.service.ItemService;
 
 import java.io.IOException;
-import java.util.Base64;
-
 
 /**
  * Вспомогательный контроллер для пополнения данными БД магазина
@@ -42,7 +40,7 @@ public class FormController {
                     .flatMap(item_id ->
                             imageService.savePhoto(item_id, photo))
                     .thenReturn("redirect:/form?ok=ok");
-        } catch (IOException e) {
+        } catch (Exception e) {
             return Mono.empty().thenReturn("redirect:/form?ok=error");
         }
     }

@@ -9,6 +9,7 @@ import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.config.ItemsRouter;
 import ru.ism.mymarketapp.module.dto.out.ItemOutDto;
 import ru.ism.mymarketapp.module.enums.Action;
+import ru.ism.mymarketapp.service.CartItemService;
 import ru.ism.mymarketapp.service.ItemService;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -25,11 +26,13 @@ class ItemHandlerTest {
     private CartHandler cartHandler;
     @MockitoBean
     private OrderHandler orderHandler;
+    @MockitoBean
+    private CartItemService cartItemService;
 
     @Test
     void getItem() {
         ItemOutDto itemOutDto = new ItemOutDto(1L, "", "", "", 1L, 1);
-        when(itemService.getItem(anyString())).thenReturn(Mono.just(itemOutDto));
+        when(itemService.getItem(anyLong())).thenReturn(Mono.just(itemOutDto));
         client.get()
                 .uri("/items/1")
                 .exchange()
@@ -40,13 +43,14 @@ class ItemHandlerTest {
                     assertNotNull(content);
                     assertTrue(content.contains("<form"));
                 });
-        verify(itemService, times(1)).getItem(anyString());
+        verify(itemService, times(1)).getItem(anyLong());
     }
 
     @Test
     void getItem_addInCart() {
         ItemOutDto itemOutDto = new ItemOutDto(1L, "", "", "", 1L, 1);
-        when(itemService.addItemInCart(anyString(), any(Action.class))).thenReturn(Mono.just(itemOutDto));
+        when(cartItemService.changeItemInCart(anyLong(), any(Action.class))).thenReturn(Mono.empty());
+        when(itemService.getItem(anyLong())).thenReturn(Mono.just(itemOutDto));
         client.get()
                 .uri("/items/1?action=PLUS")
                 .exchange()
@@ -57,6 +61,6 @@ class ItemHandlerTest {
                     assertNotNull(content);
                     assertTrue(content.contains("<form"));
                 });
-        verify(itemService, times(1)).addItemInCart(anyString(), any(Action.class));
+        verify(cartItemService, times(1)).changeItemInCart(anyLong(), any(Action.class));
     }
 }

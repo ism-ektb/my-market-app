@@ -14,7 +14,6 @@ import ru.ism.mymarketapp.module.ItemWithQuantity;
 import ru.ism.mymarketapp.module.dto.in.ItemInDto;
 import ru.ism.mymarketapp.module.dto.out.ItemOutDto;
 import ru.ism.mymarketapp.module.dto.out.Paging;
-import ru.ism.mymarketapp.module.enums.Action;
 import ru.ism.mymarketapp.module.enums.Sorting;
 import ru.ism.mymarketapp.repository.CartItemWithQuantityRepo;
 import ru.ism.mymarketapp.repository.ItemRepository;
@@ -31,7 +30,6 @@ import java.util.stream.IntStream;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class ItemServiceImpl implements ItemService {
 
     private final ItemRepository itemRepository;
@@ -46,61 +44,13 @@ public class ItemServiceImpl implements ItemService {
      * @return
      */
     @Override
-    @Transactional(readOnly = true)
-    public Mono<ItemOutDto> getItem(String item_id) {
-        long id = Long.parseLong(item_id);
+    public Mono<ItemOutDto> getItem(long id) {
         return itemRepository.findById(id)
                 .flatMap(item -> cartItemWithQuantityRepo.findByItemId(id)
                         .map(CartItemWithQuantity::getItem_with_quantity_id)
                         .flatMap(itemWithQuantityRepo::findById)
                         .switchIfEmpty(Mono.just(new ItemWithQuantity(0, id, 0)))
                         .map(iwq -> itemMapper.toItemMapperDto(iwq, item)));
-    }
-
-    /**
-     * Изменить количество товара в корзине на единицу
-     * Валидируем itemId, проверяем находится ли товар уже в корзине
-     * Изменяем число товара в корзине, сохраняем
-     * Загружаем товар из базы и преобразуем в ДТО
-     *
-     * @param itemId
-     * @param action
-     * @return
-     */
-    @Override
-    public Mono<ItemOutDto> addItemInCart(String itemId, Action action) {
-        long item_id = Long.parseLong(itemId);
-        return itemRepository.existsById(Long.valueOf(itemId))
-                .filter(exist -> exist)
-                .switchIfEmpty(Mono.error(new RuntimeException("Bad itemId")))
-                .then(itemWithQuantityRepo.findAllById(cartItemWithQuantityRepo
-                                .findAll()
-                                .map(CartItemWithQuantity::getItem_with_quantity_id))
-                        .filter(iwq -> iwq.getItem_id() == item_id).next()
-                        .switchIfEmpty(Mono.defer(() -> {
-                            var newIwq = new ItemWithQuantity();
-                            newIwq.setItem_id(item_id);
-                            newIwq.setQuantity(0);
-                            return itemWithQuantityRepo.save(newIwq)
-                                    .map(ItemWithQuantity::getId)
-                                    .flatMap(l -> cartItemWithQuantityRepo.save(new CartItemWithQuantity(l, 1L, newIwq.getItem_id())))
-                                    .flatMap(c -> itemWithQuantityRepo.findById(c.getItem_with_quantity_id()));
-                        }))
-                        .flatMap(iwq -> {
-                            if (action == Action.PLUS) {
-                                iwq.setQuantity(iwq.getQuantity() + 1);
-                                return itemWithQuantityRepo.save(iwq);
-                            } else if (action == Action.MINUS && iwq.getQuantity() > 1) {
-                                iwq.setQuantity(iwq.getQuantity() - 1);
-                                return itemWithQuantityRepo.save(iwq);
-                            } else {
-                                iwq.setQuantity(0);
-                                return itemWithQuantityRepo.deleteById(iwq.getId()).then(Mono.just(iwq));
-                            }
-                        })
-                        .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
-                                .map(item -> itemMapper.toItemMapperDto(iwq, item))));
-
     }
 
     /**
@@ -111,7 +61,6 @@ public class ItemServiceImpl implements ItemService {
      * @return
      */
 
-    @Transactional(readOnly = true)
     public Mono<List<List<ItemOutDto>>> searchItems(Map<String, String> query) {
         String search = query.getOrDefault("search", "") + "%";
         Sort sort = switch (Sorting.valueOf(query.getOrDefault("sort", "NO"))) {
@@ -161,6 +110,7 @@ public class ItemServiceImpl implements ItemService {
      * @param itemInDto
      */
     @Override
+    @Transactional
     public Mono<Long> createItem(ItemInDto itemInDto) throws IOException {
         return itemRepository.save(itemMapper.toItem(itemInDto)).map(Item::getId);
     }
@@ -172,7 +122,6 @@ public class ItemServiceImpl implements ItemService {
      * @return
      */
     @Override
-    @Transactional(readOnly = true)
     public Mono<Paging> getPage(Map<String, String> query) {
         String search = query.getOrDefault("search", "") + "%";
         Sort sort = switch (Sorting.valueOf(query.getOrDefault("sort", "NO"))) {

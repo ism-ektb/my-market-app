@@ -19,7 +19,7 @@ public class CartItemWithQuantity {
     @Column(value = "item_id")
     private long itemId;
 
-    public CartItemWithQuantity(long item_with_quantity_id, long cart_id, long itemId) {
+    public CartItemWithQuantity(long cart_id, long item_with_quantity_id, long itemId) {
         this.item_with_quantity_id = item_with_quantity_id;
         this.cart_id = cart_id;
         this.itemId = itemId;

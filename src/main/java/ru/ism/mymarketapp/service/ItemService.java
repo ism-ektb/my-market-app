@@ -4,7 +4,6 @@ import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.dto.in.ItemInDto;
 import ru.ism.mymarketapp.module.dto.out.ItemOutDto;
 import ru.ism.mymarketapp.module.dto.out.Paging;
-import ru.ism.mymarketapp.module.enums.Action;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,16 +16,7 @@ public interface ItemService {
      * @param id
      * @return
      */
-    Mono<ItemOutDto> getItem(String id);
-
-    /**
-     * Изменить количество товара в корзине на единицу
-     *
-     * @param itemId
-     * @param action
-     * @return
-     */
-    Mono<ItemOutDto> addItemInCart(String itemId, Action action);
+    Mono<ItemOutDto> getItem(long id);
 
     /**
      * Поиск товаров по ключевому слову с пагинацией. Если слово пустое выводятся все значения.

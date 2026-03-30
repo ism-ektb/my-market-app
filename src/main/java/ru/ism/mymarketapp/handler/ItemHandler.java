@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.enums.Action;
+import ru.ism.mymarketapp.service.CartItemService;
 import ru.ism.mymarketapp.service.ItemService;
 
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Map;
 public class ItemHandler {
 
     private final ItemService itemService;
+    private final CartItemService cartItemService;
 
     /**
      * Подписаться на информацию о товаре
@@ -26,7 +28,7 @@ public class ItemHandler {
         String itemId = request.pathVariable("id");
         return ServerResponse.ok()
                 .contentType(MediaType.TEXT_HTML)
-                .render("item", Map.of("item", itemService.getItem(itemId)));
+                .render("item", Map.of("item", itemService.getItem(Long.parseLong(itemId))));
     }
 
     /**
@@ -35,10 +37,11 @@ public class ItemHandler {
      * @return
      */
     public Mono<ServerResponse> addItemInCart(ServerRequest request) {
-        String itemId = request.pathVariable("id");
+        long itemId = Long.parseLong(request.pathVariable("id"));
         var item = request.queryParam("action")
                 .map(Action::valueOf)
-                .map(action -> itemService.addItemInCart(itemId, action))
+                .map(action -> cartItemService.changeItemInCart(itemId, action)
+                        .then(itemService.getItem(itemId)))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid action"));
         return ServerResponse.ok()
                 .contentType(MediaType.TEXT_HTML)
@@ -73,7 +76,7 @@ public class ItemHandler {
                         query.getOrDefault("sort", "NO"),
                         query.getOrDefault("pageNumber", "1"),
                         query.getOrDefault("pageSize", "5")),
-                itemService.addItemInCart(query.get("id"), Action.valueOf(query.get("action"))));
+                cartItemService.changeItemInCart(Long.parseLong(query.get("id")), Action.valueOf(query.get("action"))));
     }
 
 }
