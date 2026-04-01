@@ -5,13 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.r2dbc.autoconfigure.R2dbcConnectionDetails;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.Item;
 import ru.ism.mymarketapp.module.ItemWithQuantity;
 import ru.ism.mymarketapp.module.Order;
@@ -23,13 +19,9 @@ import ru.ism.mymarketapp.repository.OrderItemWithQuantityRepo;
 import ru.ism.mymarketapp.repository.OrderRepository;
 import ru.ism.mymarketapp.service.OrderService;
 
-import java.util.Collections;
-import java.util.List;
-
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@SpringBootTest
 @Testcontainers
 class OrderServiceImplTest {
 
@@ -40,38 +32,52 @@ class OrderServiceImplTest {
 
     @Autowired
     private OrderService orderService;
-
-    @MockitoBean
-    private OrderItemWithQuantityRepo orderItemWithQuantityRepo;
-    @MockitoBean
-    private ItemWithQuantityRepo itemWithQuantityRepo;
-    @MockitoBean
+    @Autowired
     private ItemRepository itemRepository;
-    @MockitoBean
+    @Autowired
+    private ItemWithQuantityRepo itemWithQuantityRepo;
+    @Autowired
+    private OrderItemWithQuantityRepo orderItemWithQuantityRepo;
+    @Autowired
     private OrderRepository orderRepository;
+
 
     @Test
     void getOrders() {
-        Order order = new Order();
-        order.setOrder_id(1L);
-        when(orderRepository.findAll()).thenReturn(Flux.just(order));
         Item item = new Item();
-        item.setId(1L);
-        item.setPrice(10L);
-        when(itemRepository.findById(anyLong())).thenReturn(Mono.just(item));
-        ItemWithQuantity iwq = new ItemWithQuantity();
-        iwq.setItem_id(1L);
-        iwq.setQuantity(2);
-        iwq.setItem_id(1L);
-        when(itemWithQuantityRepo.findById(anyLong())).thenReturn(Mono.just(iwq));
-        OrderItemWithQuantity oiwq = new OrderItemWithQuantity();
-        oiwq.setOrderId(1L);
-        oiwq.setItem_with_quantity_id(1L);
-        when(orderItemWithQuantityRepo.findAllByOrderId(anyLong())).thenReturn(Flux.just(oiwq));
-
-        List<OrderOutDto> list = orderService.getOrders().collectList().block();
+        item.setTitle("title1");
+        item.setDescription("description");
+        item.setPrice(3L);
+        item = itemRepository.save(item).block();
+        var iwq = itemWithQuantityRepo.save(new ItemWithQuantity(item.getId(), 1)).block();
+        Order order = orderRepository.save(new Order()).block();
+        var oiwq = new OrderItemWithQuantity();
+        oiwq.setItemId(item.getId());
+        oiwq.setOrderId(order.getOrder_id());
+        oiwq.setItem_with_quantity_id(iwq.getId());
+        orderItemWithQuantityRepo.save(oiwq).block();
+        var list = orderService.getOrders().collectList().block();
         assertNotNull(list);
         assertEquals(1, list.size());
-        assertEquals(10L, list.get(0).items().get(0).price());
+        assertEquals(3L, list.get(0).items().get(0).price());
+    }
+
+    @Test
+    void getOrder() {
+        Item item = new Item();
+        item.setTitle("title");
+        item.setDescription("description");
+        item.setPrice(3L);
+        item = itemRepository.save(item).block();
+        var iwq = itemWithQuantityRepo.save(new ItemWithQuantity(item.getId(), 1)).block();
+        Order order = orderRepository.save(new Order()).block();
+        var oiwq = new OrderItemWithQuantity();
+        oiwq.setItemId(item.getId());
+        oiwq.setOrderId(order.getOrder_id());
+        oiwq.setItem_with_quantity_id(iwq.getId());
+        orderItemWithQuantityRepo.save(oiwq).block();
+        OrderOutDto order1 = orderService.getOrder(order.getOrder_id()).block();
+        assertNotNull(order1);
+        assertEquals(3L, order1.items().get(0).price());
     }
 }
