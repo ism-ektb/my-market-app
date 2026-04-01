@@ -1,7 +1,7 @@
 services:
   market-postgres:
     image: postgres:13.3
-    container_name: market-upp
+    container_name: market-postgres-container
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=user
