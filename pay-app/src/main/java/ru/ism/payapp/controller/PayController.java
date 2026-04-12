@@ -15,6 +15,7 @@ import ru.ism.payapp.service.PayService;
 public class PayController implements PayControllerApi {
 
     private final PayService payService;
+
     /**
      * PUT /bay : Запрос на списание средств со счета пользователя
      * Запрос на списание средств со счета пользователя, в теле запроса передается id пользователя и сумма платежа
@@ -28,7 +29,8 @@ public class PayController implements PayControllerApi {
      */
     @Override
     public Mono<ResponseEntity<Void>> bayRequest(Mono<BayDto> bayDto, ServerWebExchange exchange) {
-        return payService.bay(bayDto)
+        return bayDto
+                .flatMap(payService::bay)
                 .map(ResponseEntity::ok);
     }
 
