@@ -20,16 +20,22 @@ public class CartHandler {
 
     /**
      * Подписаться на корзину с заказами
+     *
      * @param request
      * @return
      */
     public Mono<ServerResponse> getCart(ServerRequest request) {
+        boolean bayError = request.queryParam("bayError")
+                .map(Boolean::parseBoolean)
+                .orElse(false);
         return ServerResponse.ok()
-                .render("cart", Map.of("cart", cartService.getItemInCart()));
+                .render("cart", Map.of("cart", cartService.getItemInCartFull(),
+                        "bayError", bayError));
     }
 
     /**
      * Подписаться на изменение количества товара с itemId в корзине
+     *
      * @param request
      * @return
      */
@@ -42,7 +48,7 @@ public class CartHandler {
                 .orElseThrow(() -> new IllegalArgumentException("action is required"));
         return ServerResponse.ok()
                 .render("cart", Map.of("cart", cartItemService.changeItemInCart(itemid, action)
-                        .then(cartService.getItemInCart())));
+                        .then(cartService.getItemInCartFull())));
     }
 
 

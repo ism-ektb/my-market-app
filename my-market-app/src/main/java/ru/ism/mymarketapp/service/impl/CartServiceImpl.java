@@ -2,10 +2,11 @@ package ru.ism.mymarketapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
+import ru.ism.mymarketapp.client.api.PayControllerApi;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
+import ru.ism.mymarketapp.module.dto.out.CartFullOutDto;
 import ru.ism.mymarketapp.module.dto.out.CartOutDto;
 import ru.ism.mymarketapp.repository.CartItemWithQuantityRepo;
 import ru.ism.mymarketapp.repository.ItemRepository;
@@ -20,6 +21,7 @@ public class CartServiceImpl implements CartService {
     private final ItemWithQuantityRepo itemWithQuantityRepo;
     private final CartItemWithQuantityRepo cartItemWithQuantityRepo;
     private final ItemMapper itemMapper;
+    private final PayControllerApi payControllerApi;
 
     /**
      * Получаем список товаров в корзине, добавляем количество каждой позиции
@@ -29,7 +31,27 @@ public class CartServiceImpl implements CartService {
      */
     @Override
     public Mono<CartOutDto> getItemInCart() {
+        return getCart();
+    }
 
+    /**
+     * Получение списка товаров в корзине, общей суммы покупки,
+     * идентификатора доступности платежного сервиса и
+     * идентификатора достаточности средств для покупки
+     *
+     * @return
+     */
+    @Override
+    public Mono<CartFullOutDto> getItemInCartFull() {
+
+        return getCart()
+                .flatMap(cartOutDto -> payControllerApi.getBalance(1L)
+                        .map(balanceDto -> balanceDto.getBalance() >= cartOutDto.sum())
+                        .map(enoughMoneyToBuy -> new CartFullOutDto(cartOutDto.items(), cartOutDto.sum(), enoughMoneyToBuy, true))
+                        .onErrorReturn(new CartFullOutDto(cartOutDto.items(), cartOutDto.sum(), false, false)));
+    }
+
+    private Mono<CartOutDto> getCart() {
         return itemWithQuantityRepo.findAllById(cartItemWithQuantityRepo
                         .findAll()
                         .map(CartItemWithQuantity::getItem_with_quantity_id))

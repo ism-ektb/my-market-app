@@ -66,8 +66,7 @@ openApiGenerate {
 sourceSets.main.java.srcDir "$projectDir/build/generated/src/main/java"
 
 tasks.named('compileJava') {
-    // dependsOn([tasks.openApiGenerate, tasks.buildClient]) - вот так, если нужно опираться на обе задачи
-    dependsOn(tasks.openApiGenerate)
+     dependsOn(tasks.openApiGenerate)
 }
 springBoot {
     mainClass = 'ru.ism.payapp.PayAppApplication'

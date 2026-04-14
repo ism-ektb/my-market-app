@@ -9,6 +9,19 @@
 </head>
 
 <body class="bg-light">
+<div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${bayError}">
+    Ошибка при покупке;
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${!cart.payServiceIsAvailable}">
+    Оплата в данный момент невозможна;
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+<div class="alert alert-success alert-dismissible fade show" role="alert" th:if="${cart.payServiceIsAvailable && !cart.enoughMoneyToBuy}">
+    Недостаточно средств на счете;
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+
     <div class="container p-2">
         <div class="row p-2">
             <div class="col">
@@ -49,7 +62,7 @@
                 <form action="/buy" method="post" th:if="${!cart.items.isEmpty()}">
                     <div class="hstack gap-3">
                         <h2 th:text="'Итого: '+${cart.sum}+' руб.'"/>
-                        <button class="btn btn-warning ms-auto">Купить</button>
+                        <button class="btn btn-warning ms-auto" th:if="${cart.enoughMoneyToBuy}">Купить</button>
                     </div>
                 </form>
             </div>

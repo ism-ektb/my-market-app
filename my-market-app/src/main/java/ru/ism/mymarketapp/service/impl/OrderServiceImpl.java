@@ -5,12 +5,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import ru.ism.mymarketapp.client.api.PayControllerApi;
+import ru.ism.mymarketapp.client.domain.BayDto;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.Order;
 import ru.ism.mymarketapp.module.OrderItemWithQuantity;
 import ru.ism.mymarketapp.module.dto.out.ItemShortOutDto;
 import ru.ism.mymarketapp.module.dto.out.OrderOutDto;
 import ru.ism.mymarketapp.repository.*;
+import ru.ism.mymarketapp.service.CartService;
 import ru.ism.mymarketapp.service.OrderService;
 
 import java.util.Comparator;
@@ -24,6 +27,8 @@ public class OrderServiceImpl implements OrderService {
     private final ItemRepository itemRepository;
     private final ItemWithQuantityRepo itemWithQuantityRepo;
     private final ItemMapper itemMapper;
+    private final PayControllerApi payControllerApi;
+    private final CartService cartService;
 
     /**
      * Получение списка заказов
@@ -68,6 +73,7 @@ public class OrderServiceImpl implements OrderService {
 
     /**
      * Создание нового заказа из содержимого корзины.
+     * Загружаем содержимое корзины из БД. Списываем средства для оплаты.
      * Создаем пустой заказ. Сохраняем номер заказа в переменную.
      * Перебираем содержимое корзины. Создаём новые сущности содержимого заказа на основе содержимого корзины.
      * Удаляем содержимое корзины.
@@ -79,7 +85,15 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public Mono<Long> buy() {
         Order newOrder = new Order();
-        return orderRepository.save(newOrder)
+        return cartService.getItemInCart()
+                .map(cartOutDto -> {
+                    BayDto bayDto = new BayDto();
+                    bayDto.setUserId(1L);
+                    bayDto.setBaySum(cartOutDto.sum());
+                    return bayDto;
+                })
+                .flatMap(payControllerApi::bayRequest)
+                .then(orderRepository.save(newOrder))
                 .map(order -> {
                     newOrder.setOrder_id(order.getOrder_id());
                     return order;
@@ -96,6 +110,7 @@ public class OrderServiceImpl implements OrderService {
                                         })))
                         .flatMap(orderItemWithQuantityRepo::save)
                         .then(cartItemWithQuantityRepo.deleteAll())
+                        .then()
                         .then(Mono.just(newOrder.getOrder_id())));
     }
 }
