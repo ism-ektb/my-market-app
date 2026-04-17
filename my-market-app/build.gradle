@@ -53,6 +53,7 @@ dependencies {
 	testImplementation('org.testcontainers:testcontainers-postgresql')
 	testImplementation('org.testcontainers:testcontainers-junit-jupiter')
 	testImplementation('org.testcontainers:r2dbc:1.21.4')
+	testImplementation 'com.redis:testcontainers-redis:2.2.4'
 }
 
 tasks.named('test') {
@@ -63,7 +64,6 @@ tasks.register('buildClient', GenerateTask) {
 	generatorName.set("java")
 	inputSpec.set("$projectDir/src/main/resources/payService.yaml")
 	outputDir.set("$projectDir/build/generated")
-	ignoreFileOverride.set(".openapi-generator-java-sources.ignore")
 	modelPackage.set("ru.ism.mymarketapp.client.domain")
 	invokerPackage.set("ru.ism.mymarketapp.client")
 	apiPackage.set("ru.ism.mymarketapp.client.api")

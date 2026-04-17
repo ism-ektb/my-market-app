@@ -1,0 +1,18 @@
+services:
+  market-redis:
+    image: redis:6.2.6-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  market-postgres:
+    image: postgres:13.3
+    container_name: market-postgres-container
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=market
+    ports:
+      - '6432:5432'
+    volumes:
+      - /usr/users:/users

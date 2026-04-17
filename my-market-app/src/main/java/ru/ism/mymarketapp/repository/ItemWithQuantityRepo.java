@@ -1,5 +1,6 @@
 package ru.ism.mymarketapp.repository;
 
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
@@ -13,4 +14,7 @@ public interface ItemWithQuantityRepo extends ReactiveCrudRepository<ItemWithQua
 
     @CachePut(value = "iwq", key = "#iwq.id", condition = "#iwq.id != null")
     Mono<ItemWithQuantity> save(ItemWithQuantity iwq);
+
+    @CacheEvict(value = "iwq", key = "#id")
+    Mono<Void> deleteById(long id);
 }

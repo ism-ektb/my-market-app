@@ -33,9 +33,15 @@ dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.42")
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-r2dbc-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webflux-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation platform('org.testcontainers:testcontainers-bom:2.0.2')
+    testImplementation('org.springframework.boot:spring-boot-testcontainers')
+    testImplementation('org.testcontainers:testcontainers-postgresql')
+    testImplementation('org.testcontainers:testcontainers-junit-jupiter')
+    testImplementation('org.testcontainers:r2dbc:1.21.4')
 }
 
 tasks.named('test') {
@@ -71,4 +77,3 @@ tasks.named('compileJava') {
 springBoot {
     mainClass = 'ru.ism.payapp.PayAppApplication'
 }
-

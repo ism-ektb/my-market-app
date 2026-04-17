@@ -1,6 +1,9 @@
 package ru.ism.mymarketapp.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.redis.core.ReactiveRedisTemplate;
+import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -20,6 +23,8 @@ public class CartItemServiceImpl implements CartItemService {
     private final ItemWithQuantityRepo itemWithQuantityRepo;
     private final CartItemWithQuantityRepo cartItemWithQuantityRepo;
     private final Map<Action, Function<ItemWithQuantity, Mono<Void>>> actionHandlers;
+    @Autowired
+    private ReactiveStringRedisTemplate redisTemplate;
 
     @Autowired
     public CartItemServiceImpl(ItemWithQuantityRepo itemWithQuantityRepo, CartItemWithQuantityRepo cartItemWithQuantityRepo) {
@@ -38,6 +43,7 @@ public class CartItemServiceImpl implements CartItemService {
      * Если товара с таким номером нет. То создаем его в корзине с количеством 0.
      * Вызываем функцию, которая изменяет количество товара в корзине и либо сохнаняет измененное значение,
      * либо удаляет из корзины товар с нулевым количеством
+     *
      * @param itemId
      * @param action
      * @return
@@ -55,6 +61,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     /**
      * Увеличение количества товара в корзине. С последующим сохранением
+     *
      * @param iwq
      * @return
      */
@@ -65,6 +72,7 @@ public class CartItemServiceImpl implements CartItemService {
 
     /**
      * Уменьшение товара в корзине с последующим сохранением или каскадным удалением
+     *
      * @param iwq
      * @return
      */
@@ -73,16 +81,19 @@ public class CartItemServiceImpl implements CartItemService {
             iwq.setQuantity(iwq.getQuantity() - 1);
             return itemWithQuantityRepo.save(iwq).then();
         } else {
-            return itemWithQuantityRepo.deleteById(iwq.getId());
+            return redisTemplate.delete("ciwq::" + iwq.getItem_id())
+                    .then(itemWithQuantityRepo.deleteById(iwq.getId()));
         }
     }
 
     /**
      * Метод запускает каскадное удаление товара из корзины
+     *
      * @param iwq
      * @return
      */
     private Mono<Void> handleDelete(ItemWithQuantity iwq) {
-        return itemWithQuantityRepo.deleteById(iwq.getId());
+        return redisTemplate.delete("ciwq::" + iwq.getItem_id())
+                .then(itemWithQuantityRepo.deleteById(iwq.getId()));
     }
 }
