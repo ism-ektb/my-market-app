@@ -1,0 +1,79 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '4.0.5'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id "org.openapi.generator" version "7.12.0"
+}
+
+group = 'ru.ism'
+version = '0.0.1-SNAPSHOT'
+description = 'pay-app'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    mapstructVersion = "1.6.3"
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.2'
+    implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'org.postgresql:r2dbc-postgresql'
+    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.42")
+    implementation "org.mapstruct:mapstruct:${mapstructVersion}"
+    annotationProcessor "org.mapstruct:mapstruct-processor:${mapstructVersion}"
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-r2dbc-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-webflux-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation platform('org.testcontainers:testcontainers-bom:2.0.2')
+    testImplementation('org.springframework.boot:spring-boot-testcontainers')
+    testImplementation('org.testcontainers:testcontainers-postgresql')
+    testImplementation('org.testcontainers:testcontainers-junit-jupiter')
+    testImplementation('org.testcontainers:r2dbc:1.21.4')
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+openApiGenerate {
+    generatorName.set("spring")
+    inputSpec.set("$projectDir/src/main/resources/payService.yaml")
+    outputDir.set("$projectDir/build/generated")
+    modelPackage.set("ru.ism.payapp.domain")
+    apiPackage.set("ru.ism.payapp.api")
+    configOptions.set([
+            hideGenerationTimestamp: "true",
+            requestMappingMode: "controller",
+            interfaceOnly: "true",
+            library: "spring-boot",
+            reactive: "true",
+            useSpringBoot3: "true",
+            useJakartaEe: "true",
+            useTags: "true",
+            dateLibrary: "java8",
+            openApiNullable: "false",
+            serializableModel: "true",
+            returnSuccessCode: "true"
+    ])
+}
+
+sourceSets.main.java.srcDir "$projectDir/build/generated/src/main/java"
+
+tasks.named('compileJava') {
+     dependsOn(tasks.openApiGenerate)
+}
+springBoot {
+    mainClass = 'ru.ism.payapp.PayAppApplication'
+}

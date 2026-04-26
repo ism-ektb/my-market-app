@@ -1,0 +1,109 @@
+openapi: 3.0.0
+info:
+  title: Pay service
+  description: Pay service
+  version: 1.0.0
+servers:
+  - url: '${PAY_SERVICE.HOST:http://localhost:8081}'
+tags:
+  - name: PayController
+    description: API для работы с платежами
+paths:
+  /amount:
+    get:
+      tags:
+        - PayController
+      summary: Получение текущего баланса пользователя
+      description: Получение текущего баланса пользователя, информация передается в теле ответа и содержит id пользователя и баланс
+      operationId: getBalance
+      parameters:
+        - name: userId
+          in: query
+          description: Id пользователя
+          required: false
+          schema:
+            type: integer
+            format: int64
+            default: 1
+      responses:
+        200:
+          description: Баланс найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BalanceDto'
+        400:
+          description: Ошибка в запросе
+        404:
+          description: Отсутствует пользователь или его баланс
+        5XX:
+          description: Ошибка сервера
+  /bay:
+    put:
+      tags:
+        - PayController
+      summary: Запрос на списание средств со счета пользователя
+      description: Запрос на списание средств со счета пользователя, в теле запроса передается id пользователя и сумма платежа
+      operationId: bayRequest
+      requestBody:
+        description: данные запроса
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BayDto'
+        required: true
+      responses:
+        200:
+          description: Запрос выполнен, средства списаны
+        400:
+          description: Запрос не выполнен, средства не списаны
+        404:
+          description: Пользователь не найден
+        5XX:
+          description: Ошибка сервера
+
+components:
+  schemas:
+    BalanceDto:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор пользователя
+        balance:
+          type: integer
+          format: int64
+          description: Остаток на балансе пользователя
+      required:
+        - userId
+        - balance
+    BayDto:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: Уникальный идентификатор пользователя
+        baySum:
+          type: integer
+          format: int64
+          description: Сумма покупки
+      required:
+        - userId
+        - baySum
+  responses:
+    SuccessResponse:
+      description: баланс пользователя
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BalanceDto'
+  requestBodies:
+    CreateUser:
+      description: Запрос на списание средств
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/BayDto'

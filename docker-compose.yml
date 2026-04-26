@@ -1,0 +1,41 @@
+services:
+  market-postgres:
+    image: postgres:13.3
+    container_name: market-postgres-container
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=user
+      - POSTGRES_DB=market
+    ports:
+      - '6432:5432'
+    volumes:
+      - /usr/users:/users
+
+  market-redis:
+    image: redis:6.2.6-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  market_service:
+    build: my-market-app
+    container_name: market-service-container
+    ports:
+      - "8080:8080"
+    depends_on:
+      - market-postgres
+      - market-redis
+    environment:
+      - DATASOURCE.URL=r2dbc:postgresql://market-postgres:5432/market
+      - CACHE.HOST=market-redis
+      - PAY_SERVICE.HOST=http://pay-service:8081
+
+  pay-service:
+    build: pay-app
+    container_name: pay-service-container
+    ports:
+      - "8081:8081"
+    depends_on:
+      - market-postgres
+    environment:
+      - DATASOURCE.URL=r2dbc:postgresql://market-postgres:5432/market
