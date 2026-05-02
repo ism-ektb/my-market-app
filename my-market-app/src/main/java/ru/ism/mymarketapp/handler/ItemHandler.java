@@ -2,6 +2,9 @@ package ru.ism.mymarketapp.handler;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -21,6 +24,7 @@ public class ItemHandler {
 
     /**
      * Подписаться на информацию о товаре
+     *
      * @param request
      * @return
      */
@@ -28,11 +32,12 @@ public class ItemHandler {
         String itemId = request.pathVariable("id");
         return ServerResponse.ok()
                 .contentType(MediaType.TEXT_HTML)
-                .render("item", Map.of("item", itemService.getItem(Long.parseLong(itemId))));
+                .render("item", Map.of("item", itemService.getItem(Long.parseLong(itemId)), "username", getUsername()));
     }
 
     /**
      * Подписаться на изменение количества в корзине товара с номером Id
+     *
      * @param request
      * @return
      */
@@ -50,6 +55,7 @@ public class ItemHandler {
 
     /**
      * Подписаться на поиск списка товаров
+     *
      * @param request
      * @return
      */
@@ -61,11 +67,13 @@ public class ItemHandler {
                         "items", itemService.searchItems(query),
                         "search", query.getOrDefault("search", ""),
                         "sort", query.getOrDefault("sort", "NO"),
-                        "paging", itemService.getPage(query)));
+                        "paging", itemService.getPage(query),
+                        "username", getUsername()));
     }
 
     /**
      * Подписаться на добавление товара из найденного списка в корзину
+     *
      * @param request
      * @return
      */
@@ -77,6 +85,12 @@ public class ItemHandler {
                         query.getOrDefault("pageNumber", "1"),
                         query.getOrDefault("pageSize", "5")),
                 cartItemService.changeItemInCart(Long.parseLong(query.get("id")), Action.valueOf(query.get("action"))));
+    }
+
+    private Mono<String> getUsername() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getName);
     }
 
 }

@@ -1,6 +1,9 @@
 package ru.ism.mymarketapp.handler;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -22,7 +25,7 @@ public class OrderHandler {
      */
     public Mono<ServerResponse> getOrders(ServerRequest request) {
         return ServerResponse.ok()
-                .render("orders", Map.of("orders", orderService.getOrders()));
+                .render("orders", Map.of("orders", orderService.getOrders(), "username", getUsername()));
     }
 
     /**
@@ -36,7 +39,14 @@ public class OrderHandler {
                 .map(Boolean::parseBoolean)
                 .orElse(false);
         return ServerResponse.ok().render("order",
-                Map.of("order", orderService.getOrder(orderId), "newOrder", newOrder));
+                Map.of("order", orderService.getOrder(orderId), "newOrder", newOrder,
+                        "username", getUsername()));
+    }
+
+    private Mono<String> getUsername() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getName);
     }
 
 }

@@ -21,6 +21,12 @@
                     <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
                     <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
                 </div>
+                <div class="float-end">
+                    <span th:text="'Пользователь ' + ${username}"> </span>
+                    <a href="/logout" th:if="${username != 'anonymousUser'}"> Выйти из аккаунта </a>
+                    <a href="/login" th:if="${username == 'anonymousUser'}"> Войти в аккаунт </a>
+                    <a href="/registration" th:if="${username == 'anonymousUser'}"> Зарегистрировать аккаунт </a>
+                </div>
             </div>
         </div>
         <div class="row p-2">

@@ -58,3 +58,10 @@ CREATE TABLE IF NOT EXISTS my_shop.order_item_with_quantity
 );
 
 CREATE INDEX IF NOT EXISTS index_title ON my_shop.items (title);
+
+CREATE TABLE IF NOT EXISTS my_shop.users(
+    id BIGSERIAL PRIMARY KEY,
+    email VARCHAR NOT NULL UNIQUE,
+    password VARCHAR NOT NULL,
+    roles VARCHAR
+);
