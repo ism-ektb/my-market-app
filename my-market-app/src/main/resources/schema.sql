@@ -1,5 +1,12 @@
 CREATE SCHEMA IF NOt EXISTS my_shop;
 
+CREATE TABLE IF NOT EXISTS my_shop.users(
+                                            id BIGSERIAL PRIMARY KEY,
+                                            email VARCHAR NOT NULL UNIQUE,
+                                            password VARCHAR NOT NULL,
+                                            roles VARCHAR
+);
+
 CREATE TABLE IF NOT EXISTS my_shop.items
 (
     id          BIGSERIAL PRIMARY KEY,
@@ -26,9 +33,9 @@ CREATE TABLE IF NOT EXISTS my_shop.carts_item_with_quantity
 (
     cart_id               BIGINT,
     item_with_quantity_id BIGINT,
-    item_id               BIGINT UNIQUE,
+    item_id               BIGINT,
     PRIMARY KEY (cart_id, item_with_quantity_id),
-    FOREIGN KEY (cart_id) REFERENCES my_shop.carts (cart_id),
+    FOREIGN KEY (cart_id) REFERENCES my_shop.users (id),
     FOREIGN KEY (item_with_quantity_id) REFERENCES my_shop.item_with_quantity (id) ON
         DELETE CASCADE
 );
@@ -43,7 +50,8 @@ CREATE TABLE IF NOT EXISTS my_shop.images
 
 CREATE TABLE IF NOT EXISTS my_shop.orders
 (
-    order_id BIGSERIAL PRIMARY KEY
+    order_id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT REFERENCES my_shop.users (id)
 );
 
 CREATE TABLE IF NOT EXISTS my_shop.order_item_with_quantity
@@ -59,9 +67,3 @@ CREATE TABLE IF NOT EXISTS my_shop.order_item_with_quantity
 
 CREATE INDEX IF NOT EXISTS index_title ON my_shop.items (title);
 
-CREATE TABLE IF NOT EXISTS my_shop.users(
-    id BIGSERIAL PRIMARY KEY,
-    email VARCHAR NOT NULL UNIQUE,
-    password VARCHAR NOT NULL,
-    roles VARCHAR
-);

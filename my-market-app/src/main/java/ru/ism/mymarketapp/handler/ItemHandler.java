@@ -48,9 +48,14 @@ public class ItemHandler {
                 .map(action -> cartItemService.changeItemInCart(itemId, action)
                         .then(itemService.getItem(itemId)))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid action"));
-        return ServerResponse.ok()
-                .contentType(MediaType.TEXT_HTML)
-                .render("item", Map.of("item", item));
+        return getUsername().filter(s -> !s.equals("anonymousUser"))
+                .flatMap(s ->
+                        ServerResponse.ok()
+                                .contentType(MediaType.TEXT_HTML)
+                                .render("item", Map.of("item", item)))
+                .switchIfEmpty(ServerResponse.ok()
+                        .contentType(MediaType.TEXT_HTML)
+                        .render("redirect:/login"));
     }
 
     /**
@@ -79,12 +84,17 @@ public class ItemHandler {
      */
     public Mono<ServerResponse> addItemsInCart(ServerRequest request) {
         Map<String, String> query = request.queryParams().toSingleValueMap();
-        return ServerResponse.ok().render(String.format("redirect:/items?search=%s&sort=%s&pageNumber=%s&pageSize=%s",
-                        query.getOrDefault("search", ""),
-                        query.getOrDefault("sort", "NO"),
-                        query.getOrDefault("pageNumber", "1"),
-                        query.getOrDefault("pageSize", "5")),
-                cartItemService.changeItemInCart(Long.parseLong(query.get("id")), Action.valueOf(query.get("action"))));
+        return getUsername().filter(s -> !s.equals("anonymousUser"))
+                .flatMap(s -> ServerResponse.ok().render(String.format("redirect:/items?search=%s&sort=%s&pageNumber=%s&pageSize=%s",
+                                query.getOrDefault("search", ""),
+                                query.getOrDefault("sort", "NO"),
+                                query.getOrDefault("pageNumber", "1"),
+                                query.getOrDefault("pageSize", "5")),
+                        cartItemService.changeItemInCart(Long.parseLong(query.get("id")), Action.valueOf(query.get("action"))))
+                )
+                .switchIfEmpty(ServerResponse.ok()
+                        .contentType(MediaType.TEXT_HTML)
+                        .render("redirect:/login"));
     }
 
     private Mono<String> getUsername() {
@@ -92,5 +102,4 @@ public class ItemHandler {
                 .map(SecurityContext::getAuthentication)
                 .map(Authentication::getName);
     }
-
 }

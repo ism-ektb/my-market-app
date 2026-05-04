@@ -17,14 +17,16 @@
                 <h2>
                     <span class="badge text-bg-success">Витрина магазина</span>
                 </h2>
-                <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
-                <a href="/cart/items" class="btn btn-secondary bi bi-cart4"> Корзина</a>
+                <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text" th:if="${username != 'admin'}"> Заказы</a>
+                <a href="/cart/items" class="btn btn-secondary bi bi-cart4" th:if="${username != 'admin'}"> Корзина</a>
                 <a href="/items" class="btn btn-secondary bi bi-arrow-left-square"> Главная</a>
 
             </div>
             <div class="float-end">
-                <span th:text="'Пользователь ' + ${username}"> </span>
-                <a href="/logout" th:if="${username != null}"> Выйти из аккаунта </a>
+                <span th:text="'Пользователь ' + ${username}" th:if="${username != 'anonymousUser'}"> </span>
+                <a href="/logout" th:if="${username != 'anonymousUser'}"> Выйти из аккаунта </a>
+                <a href="/login" th:if="${username == 'anonymousUser'}"> Войти в аккаунт </a>
+                <a href="/registration" th:if="${username == 'anonymousUser'}"> Зарегистрировать аккаунт </a>
             </div>
         </div>
         <div class="row p-2">
@@ -38,7 +40,7 @@
                                   th:text="${item.price()}+' руб.'"></span>
                         </h5>
                         <p class="card-text" th:text="${item.description()}"></p>
-                        <form th:action="@{${'/items/'+item.id()}}" method="get">
+                        <form th:action="@{${'/items/'+item.id()}}" method="get" th:if="${username != 'admin'}">
                             <div class="hstack gap-3">
                                 <button type="submit" class="btn btn-outline-secondary" name="action" value="MINUS">-
                                 </button>

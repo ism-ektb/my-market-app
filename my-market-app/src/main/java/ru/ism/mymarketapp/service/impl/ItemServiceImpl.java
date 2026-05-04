@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
@@ -11,6 +13,7 @@ import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
 import ru.ism.mymarketapp.module.Item;
 import ru.ism.mymarketapp.module.ItemWithQuantity;
+import ru.ism.mymarketapp.module.User;
 import ru.ism.mymarketapp.module.dto.in.ItemInDto;
 import ru.ism.mymarketapp.module.dto.out.ItemOutDto;
 import ru.ism.mymarketapp.module.dto.out.Paging;
@@ -46,11 +49,14 @@ public class ItemServiceImpl implements ItemService {
     @Override
     public Mono<ItemOutDto> getItem(long id) {
         return itemRepository.findById(id)
-                .flatMap(item -> cartItemWithQuantityRepo.findByItemId(id)
-                        .map(CartItemWithQuantity::getItem_with_quantity_id)
-                        .flatMap(itemWithQuantityRepo::findById)
-                        .switchIfEmpty(Mono.just(new ItemWithQuantity(0, id, 0)))
-                        .map(iwq -> itemMapper.toItemMapperDto(iwq, item)));
+                .flatMap(item -> getUserId()
+                        .flatMap(userId -> cartItemWithQuantityRepo.findByCartId(userId)
+                                .filter(ciwq -> ciwq.getItemId() == id)
+                                .next()
+                                .map(CartItemWithQuantity::getItem_with_quantity_id)
+                                .flatMap(itemWithQuantityRepo::findById)
+                                .switchIfEmpty(Mono.just(new ItemWithQuantity(0, id, 0)))
+                                .map(iwq -> itemMapper.toItemMapperDto(iwq, item))));
     }
 
     /**
@@ -78,13 +84,15 @@ public class ItemServiceImpl implements ItemService {
         Pageable pageable = PageRequest.of(pageNumber, pageSize, sort);
 
         return itemRepository.findAllByTitleLikeIgnoreCase(search, pageable)
-                .flatMap(item -> {
-                    return cartItemWithQuantityRepo.findByItemId(item.getId())
-                            .map(CartItemWithQuantity::getItem_with_quantity_id)
-                            .flatMap(itemWithQuantityRepo::findById)
-                            .switchIfEmpty(Mono.just(new ItemWithQuantity(0, item.getId(), 0)))
-                            .map(iwq -> itemMapper.toItemMapperDto(iwq, item));
-                }).collectList()
+                .flatMap(item -> getUserId()
+                        .flatMap(userId -> cartItemWithQuantityRepo.findByCartId(userId)
+                                .filter(ciwq -> ciwq.getItemId() == item.getId())
+                                .next()
+                                .map(CartItemWithQuantity::getItem_with_quantity_id)
+                                .flatMap(itemWithQuantityRepo::findById)
+                                .switchIfEmpty(Mono.just(new ItemWithQuantity(0, item.getId(), 0)))
+                                .map(iwq -> itemMapper.toItemMapperDto(iwq, item))))
+                .collectList()
                 .map(list -> {
                     list.sort(comparator);
                     List<List<ItemOutDto>> list3 = new ArrayList<>(IntStream.range(0, list.size())
@@ -136,5 +144,16 @@ public class ItemServiceImpl implements ItemService {
         return itemRepository.findAllByTitleLikeIgnoreCase(search, pageable)
                 .hasElements()
                 .map(next -> new Paging(pageSize, pageNumber, pageNumber > 0, next));
+    }
+
+    private Mono<Long> getUserId() {
+        User defaultUser = new User();
+        defaultUser.setId(-1);
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(authentication ->
+                        authentication.getName().equals("anonymousUser") ? defaultUser : authentication.getPrincipal())
+                .map(object -> (User) object)
+                .map(User::getId);
     }
 }

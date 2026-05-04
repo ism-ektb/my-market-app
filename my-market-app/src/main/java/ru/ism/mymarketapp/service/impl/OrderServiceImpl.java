@@ -1,6 +1,9 @@
 package ru.ism.mymarketapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -10,6 +13,7 @@ import ru.ism.mymarketapp.client.domain.BayDto;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.Order;
 import ru.ism.mymarketapp.module.OrderItemWithQuantity;
+import ru.ism.mymarketapp.module.User;
 import ru.ism.mymarketapp.module.dto.out.ItemShortOutDto;
 import ru.ism.mymarketapp.module.dto.out.OrderOutDto;
 import ru.ism.mymarketapp.repository.*;
@@ -37,7 +41,7 @@ public class OrderServiceImpl implements OrderService {
      */
     @Override
     public Flux<OrderOutDto> getOrders() {
-        return orderRepository.findAll()
+        return getUserId().flatMapMany(orderRepository::findAllByUserId)
                 .flatMap(order -> orderItemWithQuantityRepo.findAllByOrderId(order.getOrder_id())
                         .flatMap(oiwq -> itemWithQuantityRepo.findById(oiwq.getItem_with_quantity_id())
                                 .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
@@ -85,7 +89,8 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public Mono<Long> buy() {
         Order newOrder = new Order();
-        return cartService.getItemInCart()
+        return getUserId().flatMap(userId ->
+                cartService.getItemInCart()
                 .map(cartOutDto -> {
                     BayDto bayDto = new BayDto();
                     bayDto.setUserId(1L);
@@ -93,7 +98,7 @@ public class OrderServiceImpl implements OrderService {
                     return bayDto;
                 })
                 .flatMap(payControllerApi::bayRequest)
-                .then(orderRepository.save(newOrder))
+                .then(orderRepository.save(new Order(userId)))
                 .map(order -> {
                     newOrder.setOrder_id(order.getOrder_id());
                     return order;
@@ -111,7 +116,15 @@ public class OrderServiceImpl implements OrderService {
                         .flatMap(orderItemWithQuantityRepo::save)
                         .then(cartItemWithQuantityRepo.deleteAll())
                         .then()
-                        .then(Mono.just(newOrder.getOrder_id())));
+                        .then(Mono.just(newOrder.getOrder_id()))));
+    }
+
+    private Mono<Long> getUserId() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getPrincipal)
+                .map(object -> (User) object)
+                .map(User::getId);
     }
 }
 

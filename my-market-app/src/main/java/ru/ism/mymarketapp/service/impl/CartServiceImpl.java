@@ -1,11 +1,15 @@
 package ru.ism.mymarketapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.client.api.PayControllerApi;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
+import ru.ism.mymarketapp.module.User;
 import ru.ism.mymarketapp.module.dto.out.CartFullOutDto;
 import ru.ism.mymarketapp.module.dto.out.CartOutDto;
 import ru.ism.mymarketapp.repository.CartItemWithQuantityRepo;
@@ -52,8 +56,9 @@ public class CartServiceImpl implements CartService {
     }
 
     private Mono<CartOutDto> getCart() {
-        return itemWithQuantityRepo.findAllById(cartItemWithQuantityRepo
-                        .findAll()
+        return getUserId()
+                .flatMap(userId -> itemWithQuantityRepo.findAllById(cartItemWithQuantityRepo
+                        .findByCartId(userId)
                         .map(CartItemWithQuantity::getItem_with_quantity_id))
                 .flatMap(iwq -> itemRepository.findById(iwq.getItem_id())
                         .map(item -> itemMapper.toItemMapperDto(iwq, item)))
@@ -63,6 +68,14 @@ public class CartServiceImpl implements CartService {
                             .map(item -> item.count() * item.price())
                             .mapToLong(Long::longValue).sum();
                     return new CartOutDto(list, sum);
-                });
+                }));
+    }
+
+    private Mono<Long> getUserId() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getPrincipal)
+                .map(object -> (User) object)
+                .map(User::getId);
     }
 }
