@@ -1,6 +1,7 @@
 package ru.ism.mymarketapp.handler;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -33,6 +34,7 @@ public class OrderHandler {
      * @param request
      * @return
      */
+    @PreAuthorize("hasRole('USER')")
     public Mono<ServerResponse> getOrderById(ServerRequest request) {
         long orderId = Long.parseLong(request.pathVariable("id"));
         boolean newOrder = request.queryParam("newOrder")

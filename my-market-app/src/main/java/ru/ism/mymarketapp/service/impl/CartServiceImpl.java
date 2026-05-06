@@ -5,11 +5,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
-import ru.ism.mymarketapp.client.api.PayControllerApi;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
 import ru.ism.mymarketapp.module.User;
+import ru.ism.mymarketapp.module.client.BalanceDto;
 import ru.ism.mymarketapp.module.dto.out.CartFullOutDto;
 import ru.ism.mymarketapp.module.dto.out.CartOutDto;
 import ru.ism.mymarketapp.repository.CartItemWithQuantityRepo;
@@ -25,7 +26,7 @@ public class CartServiceImpl implements CartService {
     private final ItemWithQuantityRepo itemWithQuantityRepo;
     private final CartItemWithQuantityRepo cartItemWithQuantityRepo;
     private final ItemMapper itemMapper;
-    private final PayControllerApi payControllerApi;
+    private final WebClient webClient;
 
     /**
      * Получаем список товаров в корзине, добавляем количество каждой позиции
@@ -49,7 +50,7 @@ public class CartServiceImpl implements CartService {
     public Mono<CartFullOutDto> getItemInCartFull() {
 
         return getCart()
-                .flatMap(cartOutDto -> payControllerApi.getBalance(1L)
+                .flatMap(cartOutDto -> getBalance()
                         .map(balanceDto -> balanceDto.getBalance() >= cartOutDto.sum())
                         .map(enoughMoneyToBuy -> new CartFullOutDto(cartOutDto.items(), cartOutDto.sum(), enoughMoneyToBuy, true))
                         .onErrorReturn(new CartFullOutDto(cartOutDto.items(), cartOutDto.sum(), false, false)));
@@ -78,4 +79,11 @@ public class CartServiceImpl implements CartService {
                 .map(object -> (User) object)
                 .map(User::getId);
     }
+
+    private Mono<BalanceDto> getBalance() {
+        return webClient.get().uri("http://localhost:8081/amount?userId=1")
+                .retrieve()
+                .bodyToMono(BalanceDto.class);
+    }
+
 }

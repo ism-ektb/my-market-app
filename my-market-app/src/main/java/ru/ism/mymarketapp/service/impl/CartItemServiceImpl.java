@@ -1,7 +1,6 @@
 package ru.ism.mymarketapp.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -50,7 +49,6 @@ public class CartItemServiceImpl implements CartItemService {
      */
     @Override
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_USER')")
     public Mono<Void> changeItemInCart(long itemId, Action action) {
         return getUserId()
                 .flatMap(userId -> cartItemWithQuantityRepo.findByCartId(userId)

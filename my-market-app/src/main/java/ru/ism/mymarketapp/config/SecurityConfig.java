@@ -65,6 +65,7 @@ public class SecurityConfig {
                         .pathMatchers("/items/**", "", "/", "/logout/**").permitAll()
                         .pathMatchers("/image/**").permitAll()
                         .pathMatchers("/form").hasRole("ADMIN")
+                        .pathMatchers("/orders/**").hasRole("USER")
                         .anyExchange().hasRole("USER"))
                 .formLogin(Customizer.withDefaults())
                 .anonymous(Customizer.withDefaults())
@@ -72,6 +73,7 @@ public class SecurityConfig {
                         .logoutUrl("/logout")
                         .logoutHandler(new WebSessionServerLogoutHandler())
                         .logoutSuccessHandler(logoutSuccessHandler()))
+                .oauth2Client(Customizer.withDefaults())
                 .build();
     }
 }

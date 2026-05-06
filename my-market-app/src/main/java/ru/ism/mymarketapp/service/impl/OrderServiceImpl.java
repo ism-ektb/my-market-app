@@ -6,14 +6,14 @@ import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import ru.ism.mymarketapp.client.api.PayControllerApi;
-import ru.ism.mymarketapp.client.domain.BayDto;
 import ru.ism.mymarketapp.mapper.ItemMapper;
 import ru.ism.mymarketapp.module.Order;
 import ru.ism.mymarketapp.module.OrderItemWithQuantity;
 import ru.ism.mymarketapp.module.User;
+import ru.ism.mymarketapp.module.client.BayDto;
 import ru.ism.mymarketapp.module.dto.out.ItemShortOutDto;
 import ru.ism.mymarketapp.module.dto.out.OrderOutDto;
 import ru.ism.mymarketapp.repository.*;
@@ -31,7 +31,7 @@ public class OrderServiceImpl implements OrderService {
     private final ItemRepository itemRepository;
     private final ItemWithQuantityRepo itemWithQuantityRepo;
     private final ItemMapper itemMapper;
-    private final PayControllerApi payControllerApi;
+    private final WebClient webClient;
     private final CartService cartService;
 
     /**
@@ -97,7 +97,7 @@ public class OrderServiceImpl implements OrderService {
                     bayDto.setBaySum(cartOutDto.sum());
                     return bayDto;
                 })
-                .flatMap(payControllerApi::bayRequest)
+                .flatMap(this::bay)
                 .then(orderRepository.save(new Order(userId)))
                 .map(order -> {
                     newOrder.setOrder_id(order.getOrder_id());
@@ -125,6 +125,14 @@ public class OrderServiceImpl implements OrderService {
                 .map(Authentication::getPrincipal)
                 .map(object -> (User) object)
                 .map(User::getId);
+    }
+
+
+    private Mono<Void> bay(BayDto bayDto){
+        return webClient.put().uri("http://localhost:8081/bay")
+                .bodyValue(bayDto)
+                .retrieve()
+                .bodyToMono(Void.class);
     }
 }
 
