@@ -1,6 +1,7 @@
 package ru.ism.mymarketapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -27,6 +28,9 @@ public class CartServiceImpl implements CartService {
     private final CartItemWithQuantityRepo cartItemWithQuantityRepo;
     private final ItemMapper itemMapper;
     private final WebClient webClient;
+
+    @Value("${client.url}")
+    private String url;
 
     /**
      * Получаем список товаров в корзине, добавляем количество каждой позиции
@@ -81,7 +85,7 @@ public class CartServiceImpl implements CartService {
     }
 
     private Mono<BalanceDto> getBalance() {
-        return webClient.get().uri("http://localhost:8081/amount?userId=1")
+        return webClient.get().uri(url + "/amount?userId=1")
                 .retrieve()
                 .bodyToMono(BalanceDto.class);
     }

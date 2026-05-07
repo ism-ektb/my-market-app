@@ -23,7 +23,7 @@ WORKDIR /app
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # Указываем порт приложения
-EXPOSE 8080
+EXPOSE 8085
 
 # Запускаем от имени не-root пользователя
 USER appuser

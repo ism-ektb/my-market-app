@@ -1,6 +1,7 @@
 package ru.ism.mymarketapp.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.ReactiveSecurityContextHolder;
 import org.springframework.security.core.context.SecurityContext;
@@ -33,6 +34,9 @@ public class OrderServiceImpl implements OrderService {
     private final ItemMapper itemMapper;
     private final WebClient webClient;
     private final CartService cartService;
+
+    @Value("${client.url}")
+    private String url;
 
     /**
      * Получение списка заказов
@@ -129,7 +133,7 @@ public class OrderServiceImpl implements OrderService {
 
 
     private Mono<Void> bay(BayDto bayDto){
-        return webClient.put().uri("http://localhost:8081/bay")
+        return webClient.put().uri(url + "/bay")
                 .bodyValue(bayDto)
                 .retrieve()
                 .bodyToMono(Void.class);
