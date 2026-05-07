@@ -7,6 +7,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.service.OrderService;
 
+/**
+Контроллер покупки товаров
+ */
 @Controller
 @RequiredArgsConstructor
 public class BuyController {

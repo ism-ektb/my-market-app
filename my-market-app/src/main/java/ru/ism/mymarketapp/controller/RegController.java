@@ -15,6 +15,10 @@ import ru.ism.mymarketapp.service.RegService;
 
 import static org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository.DEFAULT_SPRING_SECURITY_CONTEXT_ATTR_NAME;
 
+/**
+ * Контроллер регистрации нового пользователя.
+ * Сразу после успешной регистрации проходит аутентификация.
+ */
 @Controller
 @RequiredArgsConstructor
 public class RegController {
