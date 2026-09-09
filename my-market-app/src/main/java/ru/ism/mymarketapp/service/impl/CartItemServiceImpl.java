@@ -1,12 +1,15 @@
 package ru.ism.mymarketapp.service.impl;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.redis.core.ReactiveStringRedisTemplate;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 import ru.ism.mymarketapp.module.CartItemWithQuantity;
 import ru.ism.mymarketapp.module.ItemWithQuantity;
+import ru.ism.mymarketapp.module.User;
 import ru.ism.mymarketapp.module.enums.Action;
 import ru.ism.mymarketapp.repository.CartItemWithQuantityRepo;
 import ru.ism.mymarketapp.repository.ItemWithQuantityRepo;
@@ -21,8 +24,6 @@ public class CartItemServiceImpl implements CartItemService {
     private final ItemWithQuantityRepo itemWithQuantityRepo;
     private final CartItemWithQuantityRepo cartItemWithQuantityRepo;
     private final Map<Action, Function<ItemWithQuantity, Mono<Void>>> actionHandlers;
-    @Autowired
-    private ReactiveStringRedisTemplate redisTemplate;
 
     @Autowired
     public CartItemServiceImpl(ItemWithQuantityRepo itemWithQuantityRepo, CartItemWithQuantityRepo cartItemWithQuantityRepo) {
@@ -49,12 +50,15 @@ public class CartItemServiceImpl implements CartItemService {
     @Override
     @Transactional
     public Mono<Void> changeItemInCart(long itemId, Action action) {
-        return cartItemWithQuantityRepo.findByItemId(itemId)
-                .switchIfEmpty(itemWithQuantityRepo.save(new ItemWithQuantity(itemId, 0))
-                        .map(newIwq -> newIwq.getId())
-                        .flatMap(iwqId -> cartItemWithQuantityRepo.save(new CartItemWithQuantity(1L, iwqId, itemId))))
-                .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id()))
-                .flatMap(iwq -> actionHandlers.get(action).apply(iwq));
+        return getUserId()
+                .flatMap(userId -> cartItemWithQuantityRepo.findByCartId(userId)
+                        .filter(c -> c.getItemId() == itemId)
+                        .next()
+                        .switchIfEmpty(itemWithQuantityRepo.save(new ItemWithQuantity(itemId, 0))
+                                .map(newIwq -> newIwq.getId())
+                                .flatMap(iwqId -> cartItemWithQuantityRepo.save(new CartItemWithQuantity(userId, iwqId, itemId))))
+                        .flatMap(ciwq -> itemWithQuantityRepo.findById(ciwq.getItem_with_quantity_id()))
+                        .flatMap(iwq -> actionHandlers.get(action).apply(iwq)));
     }
 
     /**
@@ -79,8 +83,7 @@ public class CartItemServiceImpl implements CartItemService {
             iwq.setQuantity(iwq.getQuantity() - 1);
             return itemWithQuantityRepo.save(iwq).then();
         } else {
-            return redisTemplate.delete("ciwq::" + iwq.getItem_id())
-                    .then(itemWithQuantityRepo.deleteById(iwq.getId()));
+            return itemWithQuantityRepo.deleteById(iwq.getId());
         }
     }
 
@@ -91,7 +94,14 @@ public class CartItemServiceImpl implements CartItemService {
      * @return
      */
     private Mono<Void> handleDelete(ItemWithQuantity iwq) {
-        return redisTemplate.delete("ciwq::" + iwq.getItem_id())
-                .then(itemWithQuantityRepo.deleteById(iwq.getId()));
+        return itemWithQuantityRepo.deleteById(iwq.getId());
+    }
+
+    private Mono<Long> getUserId() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getPrincipal)
+                .map(object -> (User) object)
+                .map(User::getId);
     }
 }

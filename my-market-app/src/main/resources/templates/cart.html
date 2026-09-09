@@ -32,6 +32,10 @@
                     <a href="/orders" class="btn btn-secondary ms-auto bi bi-file-earmark-text"> Заказы</a>
                     <a href="/items" class="btn btn-secondary bi bi-arrow-left-square"> Главная</a>
                 </div>
+                <div class="float-end">
+                    <span th:text="'Пользователь ' + ${username}"> </span>
+                    <a href="/logout" th:if="${username != null}"> Выйти из аккаунта </a>
+                </div>
             </div>
         </div>
         <div class="row p-2" th:each="item : ${cart.items}">
@@ -64,6 +68,9 @@
                         <h2 th:text="'Итого: '+${cart.sum}+' руб.'"/>
                         <button class="btn btn-warning ms-auto" th:if="${cart.enoughMoneyToBuy}">Купить</button>
                     </div>
+                    <input type="hidden"
+                           th:name="${_csrf.parameterName}"
+                           th:value="${_csrf.token}"/>
                 </form>
             </div>
         </div>

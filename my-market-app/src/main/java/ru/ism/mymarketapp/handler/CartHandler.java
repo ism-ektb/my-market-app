@@ -1,6 +1,9 @@
 package ru.ism.mymarketapp.handler;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -30,7 +33,7 @@ public class CartHandler {
                 .orElse(false);
         return ServerResponse.ok()
                 .render("cart", Map.of("cart", cartService.getItemInCartFull(),
-                        "bayError", bayError));
+                        "bayError", bayError, "username", getUsername()));
     }
 
     /**
@@ -48,7 +51,14 @@ public class CartHandler {
                 .orElseThrow(() -> new IllegalArgumentException("action is required"));
         return ServerResponse.ok()
                 .render("cart", Map.of("cart", cartItemService.changeItemInCart(itemid, action)
-                        .then(cartService.getItemInCartFull())));
+                        .then(cartService.getItemInCartFull()),
+                "username", getUsername()));
+    }
+
+    private Mono<String> getUsername() {
+        return ReactiveSecurityContextHolder.getContext()
+                .map(SecurityContext::getAuthentication)
+                .map(Authentication::getName);
     }
 
 

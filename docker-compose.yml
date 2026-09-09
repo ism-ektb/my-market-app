@@ -17,18 +17,38 @@ services:
     ports:
       - "6379:6379"
 
-  market_service:
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    volumes:
+      - ./realm:/opt/keycloak/data/import
+    command: start-dev --health-enabled=true --import-realm
+    environment:
+      # Для входа в UI будут использоваться эти параметры
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      # В нашем случае Keycloak будет запущен на локальном порту 8080
+      - "8080:8080"
+    healthcheck:
+      test: [ 'CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080/health/ready' ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+
+  market-service:
     build: my-market-app
     container_name: market-service-container
     ports:
-      - "8080:8080"
+      - "8085:8085"
     depends_on:
-      - market-postgres
-      - market-redis
+       keycloak:
+          condition: service_healthy
     environment:
       - DATASOURCE.URL=r2dbc:postgresql://market-postgres:5432/market
       - CACHE.HOST=market-redis
       - PAY_SERVICE.HOST=http://pay-service:8081
+      - KEYCLOAK.URL=http://keycloak:8080/realms/my_server
+      - KEYCLOAK.SECRET=pyAR9tgEN1pXxcwgmurMRfYEe0GBVEQL
 
   pay-service:
     build: pay-app
@@ -39,3 +59,4 @@ services:
       - market-postgres
     environment:
       - DATASOURCE.URL=r2dbc:postgresql://market-postgres:5432/market
+      - KEYCLOAK.URL=http://keycloak:8080/realms/my_server

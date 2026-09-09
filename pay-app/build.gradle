@@ -28,6 +28,7 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:3.0.2'
     implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-security-oauth2-resource-server'
     runtimeOnly 'org.postgresql:r2dbc-postgresql'
     compileOnly("org.projectlombok:lombok:1.18.42")
     annotationProcessor("org.projectlombok:lombok:1.18.42")
@@ -42,6 +43,7 @@ dependencies {
     testImplementation('org.testcontainers:testcontainers-postgresql')
     testImplementation('org.testcontainers:testcontainers-junit-jupiter')
     testImplementation('org.testcontainers:r2dbc:1.21.4')
+    testImplementation 'org.springframework.security:spring-security-test'
 }
 
 tasks.named('test') {
@@ -55,24 +57,24 @@ openApiGenerate {
     apiPackage.set("ru.ism.payapp.api")
     configOptions.set([
             hideGenerationTimestamp: "true",
-            requestMappingMode: "controller",
-            interfaceOnly: "true",
-            library: "spring-boot",
-            reactive: "true",
-            useSpringBoot3: "true",
-            useJakartaEe: "true",
-            useTags: "true",
-            dateLibrary: "java8",
-            openApiNullable: "false",
-            serializableModel: "true",
-            returnSuccessCode: "true"
+            requestMappingMode     : "controller",
+            interfaceOnly          : "true",
+            library                : "spring-boot",
+            reactive               : "true",
+            useSpringBoot3         : "true",
+            useJakartaEe           : "true",
+            useTags                : "true",
+            dateLibrary            : "java8",
+            openApiNullable        : "false",
+            serializableModel      : "true",
+            returnSuccessCode      : "true"
     ])
 }
 
 sourceSets.main.java.srcDir "$projectDir/build/generated/src/main/java"
 
 tasks.named('compileJava') {
-     dependsOn(tasks.openApiGenerate)
+    dependsOn(tasks.openApiGenerate)
 }
 springBoot {
     mainClass = 'ru.ism.payapp.PayAppApplication'
